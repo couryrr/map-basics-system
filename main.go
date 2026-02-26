@@ -6,8 +6,37 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+const (
+	DefaultScreenWidth  int32 = 1920
+	DefaultScreenHeight int32 = 1080
+	VirtualWidth        int32 = 320
+	VirtualHeight       int32 = 180
+)
+
+var (
+	ScreenWidth  int32 = DefaultScreenWidth
+	ScreenHeight int32 = DefaultScreenHeight
+
+	tileSize      int32   = 2
+	playerSize    int32   = 2
+	playerSpeed   float32 = 100.0
+	TerrainColors         = []TerrainLevel{
+		{0.30, rl.NewColor(10, 50, 100, 255)},   // Deep Water
+		{0.40, rl.NewColor(30, 100, 160, 255)},  // Shallow Water
+		{0.45, rl.NewColor(210, 190, 140, 255)}, // Sand
+		{0.65, rl.NewColor(90, 160, 70, 255)},   // Grass
+		{0.80, rl.NewColor(40, 100, 40, 255)},   // Forest
+		{0.90, rl.NewColor(130, 120, 110, 255)}, // Mountain
+		{1.00, rl.NewColor(220, 225, 230, 255)}, // Snow Cap
+	}
+
+	currentMark = 0
+	marks       = [6]rl.Vector2{}
+)
+
 type ScreenSetting struct {
 	IsFullScreen bool
+	scale        int32
 	destWidth    int32
 	destHeight   int32
 	destX        int32
@@ -25,6 +54,7 @@ func CreateScreenSetting() ScreenSetting {
 	destY := (ScreenHeight - destHeight) / 2
 	return ScreenSetting{
 		IsFullScreen: false,
+		scale:        scale,
 		destX:        destX,
 		destY:        destY,
 		destWidth:    destWidth,
@@ -55,6 +85,7 @@ func (ss *ScreenSetting) CalculateViewport() {
 	destX := (ScreenWidth - destWidth) / 2
 	destY := (ScreenHeight - destHeight) / 2
 
+	ss.scale = scale
 	ss.destWidth = destWidth
 	ss.destHeight = destHeight
 	ss.destX = destX
@@ -65,31 +96,6 @@ type TerrainLevel struct {
 	Threshold float32
 	Color     rl.Color
 }
-
-const (
-	DefaultScreenWidth  int32 = 1920
-	DefaultScreenHeight int32 = 1080
-	VirtualWidth        int32 = 320
-	VirtualHeight       int32 = 180
-)
-
-var (
-	ScreenWidth  int32 = DefaultScreenWidth
-	ScreenHeight int32 = DefaultScreenHeight
-
-	tileSize      int32   = 2
-	playerSize    int32   = 2
-	playerSpeed   float32 = 100.0
-	TerrainColors         = []TerrainLevel{
-		{0.30, rl.NewColor(10, 50, 100, 255)},   // Deep Water
-		{0.40, rl.NewColor(30, 100, 160, 255)},  // Shallow Water
-		{0.45, rl.NewColor(210, 190, 140, 255)}, // Sand
-		{0.65, rl.NewColor(90, 160, 70, 255)},   // Grass
-		{0.80, rl.NewColor(40, 100, 40, 255)},   // Forest
-		{0.90, rl.NewColor(130, 120, 110, 255)}, // Mountain
-		{1.00, rl.NewColor(220, 225, 230, 255)}, // Snow Cap
-	}
-)
 
 func main() {
 	rl.InitWindow(ScreenWidth, ScreenHeight, "Map Basics")
@@ -115,7 +121,7 @@ func main() {
 	screenSetting := CreateScreenSetting()
 
 	for !rl.WindowShouldClose() {
-		HandleInput(&player, &screenSetting)
+		HandleInput(&player, &screenSetting, &camera)
 
 		rl.BeginTextureMode(texture)
 		rl.ClearBackground(rl.White)
@@ -126,6 +132,9 @@ func main() {
 			for y := int32(0); y < ScreenHeight; y += tileSize {
 				rl.DrawRectangle(x, y, tileSize, tileSize, DetermineTile(x, y, perlin))
 			}
+		}
+		for _, mark := range marks {
+			rl.DrawRectangleLinesEx(rl.NewRectangle(mark.X, mark.Y, float32(tileSize), float32(tileSize)), 1, rl.White)
 		}
 		rl.DrawRectangleRec(player, rl.Red)
 
@@ -141,10 +150,41 @@ func main() {
 	}
 }
 
-func HandleInput(player *rl.Rectangle, screenSetting *ScreenSetting) {
-	if rl.IsKeyDown(rl.KeyF11) {
+func HandleInput(player *rl.Rectangle, screenSetting *ScreenSetting, camera *rl.Camera2D) {
+	if rl.IsKeyPressed(rl.KeyF11) {
 		screenSetting.HandleScreenToggle()
 	}
+	if rl.IsKeyPressed(rl.KeyE) {
+		camera.Rotation += 90
+	}
+	if rl.IsKeyPressed(rl.KeyQ) {
+		camera.Rotation -= 90
+	}
+	if rl.IsKeyPressed(rl.KeyC) {
+		camera.Rotation = 0
+	}
+
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		mark := rl.GetMousePosition()
+		mark.X = (mark.X - float32(screenSetting.destX)) / float32(screenSetting.scale)
+		mark.Y = (mark.Y - float32(screenSetting.destY)) / float32(screenSetting.scale)
+		marks[currentMark] = rl.GetScreenToWorld2D(mark, *camera)
+		currentMark = (currentMark + 1) % 6
+	}
+	for key := rl.KeyOne; key <= rl.KeySix; key++ {
+		if rl.IsKeyPressed(int32(key)) {
+			selected := int(key - rl.KeyOne)
+			mark := marks[selected]
+			player.X = mark.X
+			player.Y = mark.Y
+		}
+	}
+	if rl.IsKeyPressed(rl.KeyOne) {
+		mark := marks[0]
+		player.X = mark.X
+		player.Y = mark.Y
+	}
+
 	delta := rl.GetFrameTime()
 
 	dx, dy := float32(0), float32(0)
@@ -170,6 +210,7 @@ func HandleInput(player *rl.Rectangle, screenSetting *ScreenSetting) {
 	player.X += dx * playerSpeed * delta
 	player.Y += dy * playerSpeed * delta
 }
+
 func DetermineTile(x, y int32, perlin *rl.Image) color.RGBA {
 	n := float32(rl.GetImageColor(*perlin, x, y).R) / 255
 	for _, t := range TerrainColors {
