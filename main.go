@@ -138,9 +138,6 @@ func main() {
 	perlin := rl.GenImagePerlinNoise(int(ScreenWidth)*2, int(ScreenHeight)*2, 0, 0, 10)
 	defer rl.UnloadImage(perlin)
 
-	perlinTexture := rl.LoadTextureFromImage(perlin)
-	defer rl.UnloadTexture(perlinTexture)
-
 	texture := rl.LoadRenderTexture(int32(VirtualWidth), int32(VirtualHeight))
 	defer rl.UnloadRenderTexture(texture)
 
@@ -159,7 +156,6 @@ func main() {
 		rl.ClearBackground(rl.White)
 		gameCamera.Camera.Target = rl.NewVector2(player.Position.X+player.Size.X/2, player.Position.Y+player.Size.Y/2)
 		rl.BeginMode2D(*gameCamera.Camera)
-		rl.DrawTexture(perlinTexture, 0, 0, rl.White)
 		for x := int32(0); x < int32(ScreenWidth); x += int32(tileSize) {
 			for y := int32(0); y < int32(ScreenHeight); y += int32(tileSize) {
 				rl.DrawRectangle(x, y, int32(tileSize), int32(tileSize), DetermineTile(x, y, perlin))
@@ -239,9 +235,12 @@ func HandleInput(player *Player, screenSetting *ScreenSetting, gameCamera *GameC
 		dx *= 0.7071
 		dy *= 0.7071
 	}
+	angle := -gameCamera.Camera.Rotation * rl.Deg2rad
+	movement := rl.NewVector2(dx, dy)
+	rotated := rl.Vector2Rotate(movement, angle)
 
-	player.Position.Y += dy * playerSpeed * delta
-	player.Position.X += dx * playerSpeed * delta
+	player.Position.X += rotated.X * playerSpeed * delta
+	player.Position.Y += rotated.Y * playerSpeed * delta
 }
 
 func DetermineTile(x, y int32, perlin *rl.Image) color.RGBA {
