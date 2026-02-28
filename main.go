@@ -7,18 +7,18 @@ import (
 )
 
 const (
-	DefaultScreenWidth  int32 = 1920
-	DefaultScreenHeight int32 = 1080
-	VirtualWidth        int32 = 320
-	VirtualHeight       int32 = 180
+	DefaultScreenWidth  float32 = 1920
+	DefaultScreenHeight float32 = 1080
+	VirtualWidth        float32 = 320
+	VirtualHeight       float32 = 180
 )
 
 var (
-	ScreenWidth  int32 = DefaultScreenWidth
-	ScreenHeight int32 = DefaultScreenHeight
+	ScreenWidth  float32 = DefaultScreenWidth
+	ScreenHeight float32 = DefaultScreenHeight
 
-	tileSize      int32   = 2
-	playerSize    int32   = 2
+	tileSize      float32 = 2
+	playerSize    float32 = 2
 	playerSpeed   float32 = 100.0
 	TerrainColors         = []TerrainLevel{
 		{0.30, rl.NewColor(10, 50, 100, 255)},   // Deep Water
@@ -36,11 +36,11 @@ var (
 
 type ScreenSetting struct {
 	IsFullScreen bool
-	scale        int32
-	destWidth    int32
-	destHeight   int32
-	destX        int32
-	destY        int32
+	scale        float32
+	destWidth    float32
+	destHeight   float32
+	destX        float32
+	destY        float32
 }
 
 func CreateScreenSetting() ScreenSetting {
@@ -68,8 +68,8 @@ func (ss *ScreenSetting) HandleScreenToggle() {
 		ScreenWidth = DefaultScreenWidth
 		ScreenHeight = DefaultScreenHeight
 	} else {
-		ScreenWidth = int32(rl.GetScreenWidth())
-		ScreenHeight = int32(rl.GetScreenHeight())
+		ScreenWidth = float32(rl.GetScreenWidth())
+		ScreenHeight = float32(rl.GetScreenHeight())
 	}
 	ss.IsFullScreen = !ss.IsFullScreen
 	ss.CalculateViewport()
@@ -98,7 +98,7 @@ type TerrainLevel struct {
 }
 
 func main() {
-	rl.InitWindow(ScreenWidth, ScreenHeight, "Map Basics")
+	rl.InitWindow(int32(ScreenWidth), int32(ScreenHeight), "Map Basics")
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(60)
 
@@ -108,7 +108,7 @@ func main() {
 	perlinTexture := rl.LoadTextureFromImage(perlin)
 	defer rl.UnloadTexture(perlinTexture)
 
-	texture := rl.LoadRenderTexture(VirtualWidth, VirtualHeight)
+	texture := rl.LoadRenderTexture(int32(VirtualWidth), int32(VirtualHeight))
 	defer rl.UnloadRenderTexture(texture)
 
 	player := rl.NewRectangle(float32(ScreenWidth/2), float32(ScreenHeight/2), float32(playerSize), float32(playerSize))
@@ -128,9 +128,9 @@ func main() {
 		camera.Target = rl.NewVector2(player.X+player.Width/2, player.Y+player.Height/2)
 		rl.BeginMode2D(camera)
 		rl.DrawTexture(perlinTexture, 0, 0, rl.White)
-		for x := int32(0); x < ScreenWidth; x += tileSize {
-			for y := int32(0); y < ScreenHeight; y += tileSize {
-				rl.DrawRectangle(x, y, tileSize, tileSize, DetermineTile(x, y, perlin))
+		for x := int32(0); x < int32(ScreenWidth); x += int32(tileSize) {
+			for y := int32(0); y < int32(ScreenHeight); y += int32(tileSize) {
+				rl.DrawRectangle(x, y, int32(tileSize), int32(tileSize), DetermineTile(x, y, perlin))
 			}
 		}
 		for _, mark := range marks {
