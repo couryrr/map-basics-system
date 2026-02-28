@@ -34,6 +34,24 @@ var (
 	marks       = [6]rl.Vector2{}
 )
 
+type Point interface {
+	GetSize() rl.Vector2
+	GetPostition() rl.Vector2
+}
+
+type Player struct {
+	Size     rl.Vector2
+	Position rl.Vector2
+}
+
+func (p *Player) GetSize() rl.Vector2 {
+	return p.Size
+}
+
+func (p *Player) GetPostition() rl.Vector2 {
+	return p.Position
+}
+
 type ScreenSetting struct {
 	IsFullScreen bool
 	scale        float32
@@ -92,6 +110,21 @@ func (ss *ScreenSetting) CalculateViewport() {
 	ss.destY = destY
 }
 
+type GameCamera struct {
+	Camera *rl.Camera2D
+}
+
+func CreateGameCamera(target Point, offSet rl.Vector2, rotation float32, zoom float32) GameCamera {
+	return GameCamera{
+		Camera: &rl.Camera2D{
+			Target:   target.GetPostition(),
+			Offset:   offSet,
+			Rotation: rotation,
+			Zoom:     zoom,
+		},
+	}
+}
+
 type TerrainLevel struct {
 	Threshold float32
 	Color     rl.Color
@@ -111,22 +144,21 @@ func main() {
 	texture := rl.LoadRenderTexture(int32(VirtualWidth), int32(VirtualHeight))
 	defer rl.UnloadRenderTexture(texture)
 
-	player := rl.NewRectangle(float32(ScreenWidth/2), float32(ScreenHeight/2), float32(playerSize), float32(playerSize))
-	camera := rl.Camera2D{}
-	camera.Target = rl.NewVector2(float32(player.X), float32(player.Y))
-	camera.Offset = rl.NewVector2(float32(VirtualWidth/2), float32(VirtualHeight/2))
-	camera.Rotation = 0.0
-	camera.Zoom = 1.0
+	player := Player{
+		Size:     rl.NewVector2(playerSize, playerSize),
+		Position: rl.NewVector2(ScreenWidth/2, ScreenHeight/2),
+	}
 
+	gameCamera := CreateGameCamera(&player, rl.NewVector2(VirtualWidth/2, VirtualHeight/2), 0.0, 1.0)
 	screenSetting := CreateScreenSetting()
 
 	for !rl.WindowShouldClose() {
-		HandleInput(&player, &screenSetting, &camera)
+		HandleInput(&player, &screenSetting, &gameCamera)
 
 		rl.BeginTextureMode(texture)
 		rl.ClearBackground(rl.White)
-		camera.Target = rl.NewVector2(player.X+player.Width/2, player.Y+player.Height/2)
-		rl.BeginMode2D(camera)
+		gameCamera.Camera.Target = rl.NewVector2(player.Position.X+player.Size.X/2, player.Position.Y+player.Size.Y/2)
+		rl.BeginMode2D(*gameCamera.Camera)
 		rl.DrawTexture(perlinTexture, 0, 0, rl.White)
 		for x := int32(0); x < int32(ScreenWidth); x += int32(tileSize) {
 			for y := int32(0); y < int32(ScreenHeight); y += int32(tileSize) {
@@ -136,7 +168,8 @@ func main() {
 		for _, mark := range marks {
 			rl.DrawRectangleLinesEx(rl.NewRectangle(mark.X, mark.Y, float32(tileSize), float32(tileSize)), 1, rl.White)
 		}
-		rl.DrawRectangleRec(player, rl.Red)
+
+		rl.DrawRectangleRec(rl.NewRectangle(player.Position.X, player.Position.Y, player.Size.X, player.Size.Y), rl.Red)
 
 		rl.EndMode2D()
 		rl.EndTextureMode()
@@ -150,39 +183,39 @@ func main() {
 	}
 }
 
-func HandleInput(player *rl.Rectangle, screenSetting *ScreenSetting, camera *rl.Camera2D) {
+func HandleInput(player *Player, screenSetting *ScreenSetting, gameCamera *GameCamera) {
 	if rl.IsKeyPressed(rl.KeyF11) {
 		screenSetting.HandleScreenToggle()
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		camera.Rotation += 90
+		gameCamera.Camera.Rotation += 90
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		camera.Rotation -= 90
+		gameCamera.Camera.Rotation -= 90
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		camera.Rotation = 0
+		gameCamera.Camera.Rotation = 0
 	}
 
 	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		mark := rl.GetMousePosition()
 		mark.X = (mark.X - float32(screenSetting.destX)) / float32(screenSetting.scale)
 		mark.Y = (mark.Y - float32(screenSetting.destY)) / float32(screenSetting.scale)
-		marks[currentMark] = rl.GetScreenToWorld2D(mark, *camera)
+		marks[currentMark] = rl.GetScreenToWorld2D(mark, *gameCamera.Camera)
 		currentMark = (currentMark + 1) % 6
 	}
 	for key := rl.KeyOne; key <= rl.KeySix; key++ {
 		if rl.IsKeyPressed(int32(key)) {
 			selected := int(key - rl.KeyOne)
 			mark := marks[selected]
-			player.X = mark.X
-			player.Y = mark.Y
+			player.Position.X = mark.X
+			player.Position.Y = mark.Y
 		}
 	}
 	if rl.IsKeyPressed(rl.KeyOne) {
 		mark := marks[0]
-		player.X = mark.X
-		player.Y = mark.Y
+		player.Position.Y = mark.Y
+		player.Position.X = mark.X
 	}
 
 	delta := rl.GetFrameTime()
@@ -207,8 +240,8 @@ func HandleInput(player *rl.Rectangle, screenSetting *ScreenSetting, camera *rl.
 		dy *= 0.7071
 	}
 
-	player.X += dx * playerSpeed * delta
-	player.Y += dy * playerSpeed * delta
+	player.Position.Y += dy * playerSpeed * delta
+	player.Position.X += dx * playerSpeed * delta
 }
 
 func DetermineTile(x, y int32, perlin *rl.Image) color.RGBA {
