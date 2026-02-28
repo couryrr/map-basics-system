@@ -110,12 +110,26 @@ func (ss *ScreenSetting) CalculateViewport() {
 	ss.destY = destY
 }
 
+type GameCamerMode int
+
+const (
+	CameraModePlanning GameCamerMode = iota
+	CameraModePlayer
+)
+
+var GameCameraName = map[GameCamerMode]string{
+	CameraModePlanning: "planning",
+	CameraModePlayer:   "player",
+}
+
 type GameCamera struct {
-	Camera *rl.Camera2D
+	CameraMode GameCamerMode
+	Camera     *rl.Camera2D
 }
 
 func CreateGameCamera(target Point, offSet rl.Vector2, rotation float32, zoom float32) GameCamera {
 	return GameCamera{
+		CameraMode: CameraModePlayer,
 		Camera: &rl.Camera2D{
 			Target:   target.GetPostition(),
 			Offset:   offSet,
@@ -123,6 +137,10 @@ func CreateGameCamera(target Point, offSet rl.Vector2, rotation float32, zoom fl
 			Zoom:     zoom,
 		},
 	}
+}
+
+func (gc *GameCamera) ChangeMode(mode GameCamerMode) {
+	gc.CameraMode = mode
 }
 
 type TerrainLevel struct {
@@ -192,6 +210,16 @@ func HandleInput(player *Player, screenSetting *ScreenSetting, gameCamera *GameC
 	if rl.IsKeyPressed(rl.KeyC) {
 		gameCamera.Camera.Rotation = 0
 	}
+	if rl.IsKeyPressed(rl.KeyTab) {
+		if gameCamera.CameraMode == CameraModePlanning {
+			gameCamera.ChangeMode(CameraModePlayer)
+			gameCamera.Camera.Zoom = 1.0
+		} else if gameCamera.CameraMode == CameraModePlayer {
+			gameCamera.ChangeMode(CameraModePlanning)
+			gameCamera.Camera.Zoom = 0.5
+		}
+
+	}
 
 	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		mark := rl.GetMousePosition()
@@ -207,11 +235,6 @@ func HandleInput(player *Player, screenSetting *ScreenSetting, gameCamera *GameC
 			player.Position.X = mark.X
 			player.Position.Y = mark.Y
 		}
-	}
-	if rl.IsKeyPressed(rl.KeyOne) {
-		mark := marks[0]
-		player.Position.Y = mark.Y
-		player.Position.X = mark.X
 	}
 
 	delta := rl.GetFrameTime()
