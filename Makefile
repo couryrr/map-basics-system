@@ -1,7 +1,7 @@
 # Makefile for Boids project
 
 APP_NAME := map-basics
-MAIN_FILE := main.go
+MAIN_FILE := .
 BUILD_DIR := bin
 WINDOWS_DEPLOY_PATH := /mnt/c/Users/Coury/Devlopment/map-basics.exe
 

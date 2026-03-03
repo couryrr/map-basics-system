@@ -2,12 +2,19 @@ package system
 
 import (
 	"image/color"
+	"math"
+	"os"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
-	terrainColors = [7]TerrainLevel{
+	worldSize      rl.Vector2 = rl.NewVector2(1920*5, 1080*5)
+	tileSize       float32    = 5
+	chunksToRender float32    = 3
+	chunkSize      float32    = 15
+	chunkWorldSize float32    = chunkSize * tileSize
+	terrainColors             = [7]TerrainLevel{
 		{0.30, rl.NewColor(10, 50, 100, 255)},   // Deep Water
 		{0.40, rl.NewColor(30, 100, 160, 255)},  // Shallow Water
 		{0.45, rl.NewColor(210, 190, 140, 255)}, // Sand
@@ -24,8 +31,10 @@ type TerrainLevel struct {
 }
 
 type World struct {
-	perlin   *rl.Image
-	tileSize float32
+	perlin        *rl.Image
+	RenderTexture *rl.RenderTexture2D
+	tileSize      float32
+	Camera        GameCamera
 }
 
 func (w *World) DetermineTile(x, y float32, perlin *rl.Image) color.RGBA {
@@ -45,9 +54,56 @@ func (w *World) DetermineTile(x, y float32, perlin *rl.Image) color.RGBA {
 	}
 	return rl.Black
 }
-func CreateWorld(tileSize float32, noise *rl.Image) World {
+
+func (w *World) Draw() {
+	target := w.Camera.Camera.Target
+	rl.BeginTextureMode(*w.RenderTexture)
+	rl.ClearBackground(rl.White)
+	rl.BeginMode2D(*w.Camera.Camera)
+	chunkX := float32(math.Floor(float64(target.X / chunkWorldSize)))
+	chunkY := float32(math.Floor(float64(target.Y / chunkWorldSize)))
+	for dx := float32(-chunksToRender); dx <= chunksToRender; dx++ {
+		for dy := float32(-chunksToRender); dy <= chunksToRender; dy++ {
+			for x := float32(0); x < chunkSize; x++ {
+				for y := float32(0); y < chunkSize; y++ {
+					worldX := (chunkX+dx)*chunkWorldSize + x*tileSize
+					worldY := (chunkY+dy)*chunkWorldSize + y*tileSize
+					rl.DrawRectangleRec(rl.NewRectangle(worldX, worldY, tileSize, tileSize), w.DetermineTile(worldX, worldY, w.perlin))
+				}
+			}
+			worldRX := float32(chunkX+dx) * chunkWorldSize
+			worldRY := float32(chunkY+dy) * chunkWorldSize
+			rl.DrawRectangleLinesEx(rl.NewRectangle(worldRX, worldRY, chunkWorldSize, chunkWorldSize), 1, rl.Green)
+		}
+	}
+	rl.EndMode2D()
+	rl.EndTextureMode()
+
+}
+
+func (w *World) UnloadWorld(){
+	rl.UnloadImage(w.perlin)
+	rl.UnloadRenderTexture(*w.RenderTexture)
+}
+
+func GetPerlin(size rl.Vector2) *rl.Image {
+	perlinPath := "perlin.png"
+	if _, err := os.Stat(perlinPath); os.IsNotExist(err) {
+		perlin := rl.GenImagePerlinNoise(int(size.X)*5, int(size.Y)*5, 0, 0, 4.0)
+		rl.ExportImage(*perlin, perlinPath)
+		return perlin
+	}
+	return rl.LoadImage(perlinPath)
+}
+
+func CreateWorld(camera GameCamera, texture rl.RenderTexture2D) World {
+	perlin := GetPerlin(worldSize)
+	defer rl.UnloadImage(perlin)
 	return World{
-		perlin:   noise,
-		tileSize: tileSize,
+		perlin:        GetPerlin(worldSize),
+		RenderTexture: &texture,
+		tileSize:      tileSize,
+		Camera:        camera,
 	}
 }
+
