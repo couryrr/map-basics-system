@@ -31,22 +31,23 @@ type TerrainLevel struct {
 }
 
 type World struct {
-	perlin        *rl.Image
-	RenderTexture *rl.RenderTexture2D
-	tileSize      float32
-	Camera        GameCamera
+	Camera          GameCamera
+	WorldScreenSize rl.Vector2
+	RenderTexture   *rl.RenderTexture2D
+	perlin          *rl.Image
+	tileSize        float32
 }
 
-func (w *World) DetermineTile(x, y float32, perlin *rl.Image) color.RGBA {
-	px := int32(x/w.tileSize) % perlin.Width
-	py := int32(y/w.tileSize) % perlin.Height
+func (w *World) DetermineTile(x, y float32) color.RGBA {
+	px := int32(x/w.tileSize) % w.perlin.Width
+	py := int32(y/w.tileSize) % w.perlin.Height
 	if px < 0 {
-		px += perlin.Width
+		px += w.perlin.Width
 	}
 	if py < 0 {
-		py += perlin.Height
+		py += w.perlin.Height
 	}
-	n := float32(rl.GetImageColor(*perlin, px, py).R) / 255.0
+	n := float32(rl.GetImageColor(*w.perlin, px, py).R) / 255.0
 	for _, t := range terrainColors {
 		if n <= t.Threshold {
 			return t.Color
@@ -54,34 +55,36 @@ func (w *World) DetermineTile(x, y float32, perlin *rl.Image) color.RGBA {
 	}
 	return rl.Black
 }
-
 func (w *World) Draw() {
 	target := w.Camera.Camera.Target
 	rl.BeginTextureMode(*w.RenderTexture)
 	rl.ClearBackground(rl.White)
 	rl.BeginMode2D(*w.Camera.Camera)
+	// Where am I to start in the chunks
 	chunkX := float32(math.Floor(float64(target.X / chunkWorldSize)))
 	chunkY := float32(math.Floor(float64(target.Y / chunkWorldSize)))
 	for dx := float32(-chunksToRender); dx <= chunksToRender; dx++ {
 		for dy := float32(-chunksToRender); dy <= chunksToRender; dy++ {
-			for x := float32(0); x < chunkSize; x++ {
-				for y := float32(0); y < chunkSize; y++ {
-					worldX := (chunkX+dx)*chunkWorldSize + x*tileSize
-					worldY := (chunkY+dy)*chunkWorldSize + y*tileSize
-					rl.DrawRectangleRec(rl.NewRectangle(worldX, worldY, tileSize, tileSize), w.DetermineTile(worldX, worldY, w.perlin))
-				}
-			}
+			// at my target chunk go out - and + and draw
 			worldRX := float32(chunkX+dx) * chunkWorldSize
 			worldRY := float32(chunkY+dy) * chunkWorldSize
+			for x := range int32(chunkSize) {
+				for y := range int32(chunkSize) {
+					worldX := worldRX + float32(x)*tileSize
+					worldY := worldRY + float32(y)*tileSize
+					rl.DrawRectangleRec(rl.NewRectangle(worldX, worldY, tileSize, tileSize), w.DetermineTile(worldX, worldY))
+				}
+			}
 			rl.DrawRectangleLinesEx(rl.NewRectangle(worldRX, worldRY, chunkWorldSize, chunkWorldSize), 1, rl.Green)
 		}
 	}
+	rl.DrawRectangleLinesEx(rl.NewRectangle(chunkX*chunkWorldSize, chunkY*chunkWorldSize, chunkWorldSize, chunkWorldSize), 1, rl.Red)
 	rl.EndMode2D()
 	rl.EndTextureMode()
 
 }
 
-func (w *World) UnloadWorld(){
+func (w *World) UnloadWorld() {
 	rl.UnloadImage(w.perlin)
 	rl.UnloadRenderTexture(*w.RenderTexture)
 }
@@ -96,14 +99,15 @@ func GetPerlin(size rl.Vector2) *rl.Image {
 	return rl.LoadImage(perlinPath)
 }
 
-func CreateWorld(camera GameCamera, texture rl.RenderTexture2D) World {
+func CreateWorld(worldScreenSize rl.Vector2) World {
 	perlin := GetPerlin(worldSize)
-	defer rl.UnloadImage(perlin)
+	texture := rl.LoadRenderTexture(int32(worldScreenSize.X), int32(worldScreenSize.Y))
+	camera := CreateGameCamera(rl.NewVector2(float32(perlin.Width)/2, float32(perlin.Height)/2), rl.Vector2Scale(worldScreenSize, 0.5), 0.0, 1.0)
 	return World{
-		perlin:        GetPerlin(worldSize),
-		RenderTexture: &texture,
-		tileSize:      tileSize,
-		Camera:        camera,
+		Camera:          camera,
+		WorldScreenSize: worldScreenSize,
+		RenderTexture:   &texture,
+		perlin:          perlin,
+		tileSize:        tileSize,
 	}
 }
-

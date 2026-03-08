@@ -6,56 +6,37 @@ import (
 
 // FIXME: Just making some lazy decisions here.
 var (
-	Marks               = [6]rl.Vector2{}
-	currentMark         = 0
-	playerSpeed float32 = 100.0
+	cameraSpeed float32 = 100.0
 )
 
-func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera) {
+func HandleInput(screenSetting *ScreenSetting, world World) {
 	if rl.IsKeyPressed(rl.KeyF11) {
-		screenSetting.ToggleScreenSize()
+		screenSetting.ToggleScreenSize(world.WorldScreenSize)
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		gameCamera.Camera.Rotation += 90
+		world.Camera.Camera.Rotation += 90
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		gameCamera.Camera.Rotation -= 90
+		world.Camera.Camera.Rotation -= 90
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		gameCamera.Camera.Rotation = 0
+		world.Camera.Camera.Rotation = 0
 	}
 	if rl.IsKeyPressed(rl.KeyTab) {
-		switch gameCamera.CameraMode {
+		switch world.Camera.CameraMode {
 		case CameraModePlanning:
-			gameCamera.ChangeMode(CameraModeBuild)
-			gameCamera.Camera.Zoom = 1.0
+			world.Camera.ChangeMode(CameraModeBuild)
+			world.Camera.Camera.Zoom = 1.0
 		case CameraModeBuild:
-			gameCamera.ChangeMode(CameraModePlanning)
-			gameCamera.Camera.Zoom = 0.5
+			world.Camera.ChangeMode(CameraModePlanning)
+			world.Camera.Camera.Zoom = 0.5
 		default:
-			gameCamera.ChangeMode(CameraModeBuild)
-			gameCamera.Camera.Zoom = 1.0
+			world.Camera.ChangeMode(CameraModeBuild)
+			world.Camera.Camera.Zoom = 1.0
 		}
 	}
 
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		mark := rl.GetMousePosition()
-		mark.X = (mark.X - float32(screenSetting.DestinationPosition.X)) / float32(screenSetting.scale)
-		mark.Y = (mark.Y - float32(screenSetting.DestinationPosition.Y)) / float32(screenSetting.scale)
-		Marks[currentMark] = rl.GetScreenToWorld2D(mark, *gameCamera.Camera)
-		currentMark = (currentMark + 1) % 6
-	}
-
-	target := gameCamera.Camera.Target
-	for key := rl.KeyOne; key <= rl.KeySix; key++ {
-		if rl.IsKeyPressed(int32(key)) {
-			selected := int(key - rl.KeyOne)
-			mark := Marks[selected]
-			target.X = mark.X
-			target.Y = mark.Y
-		}
-	}
-
+	target := world.Camera.Camera.Target
 	delta := rl.GetFrameTime()
 
 	dx, dy := float32(0), float32(0)
@@ -77,12 +58,12 @@ func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera) {
 		dx *= 0.7071
 		dy *= 0.7071
 	}
-	angle := -gameCamera.Camera.Rotation * rl.Deg2rad
+	angle := -world.Camera.Camera.Rotation * rl.Deg2rad
 	movement := rl.NewVector2(dx, dy)
 	rotated := rl.Vector2Rotate(movement, angle)
 
-	target.X += rotated.X * playerSpeed * delta
-	target.Y += rotated.Y * playerSpeed * delta
+	target.X += rotated.X * cameraSpeed * delta
+	target.Y += rotated.Y * cameraSpeed * delta
 
-	gameCamera.Camera.Target = target
+	world.Camera.Camera.Target = target
 }

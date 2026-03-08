@@ -1,23 +1,22 @@
 package main
 
+import (
+	"github.com/couryrr/map-basics-system/system"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
+
 type GameSettings struct {
-	WindowedScreenWidth    float32
-	WindowededScreenHeight float32
-	ScreenHeight           float32
-	ScreenWidth            float32
+	ScreenSetting system.ScreenSetting
 }
 
 type Game struct {
-	settings GameSettings
+	GameSettings GameSettings
 }
 
-func CreateGamePlease() Game {
+func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	return Game{
-		settings: GameSettings{
-			WindowedScreenWidth: 1920,
-			WindowededScreenHeight: 1080,
-			ScreenWidth: 1920,
-			ScreenHeight: 1080,
+		GameSettings: GameSettings{
+			ScreenSetting: system.CreateScreenSetting(screenSize, windowedScreenSize),
 		},
 	}
 }

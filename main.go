@@ -5,33 +5,26 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-const (
-	VirtualWidth  float32 = 320
-	VirtualHeight float32 = 180
-)
-
-var ()
-
 func main() {
-	game := CreateGamePlease()
-	screenSetting := system.CreateScreenSetting(rl.NewVector2(game.settings.ScreenWidth, game.settings.ScreenHeight), rl.NewVector2(VirtualWidth, VirtualHeight), rl.NewVector2(game.settings.WindowedScreenWidth, game.settings.WindowededScreenHeight))
+	game := CreateGame(rl.NewVector2(1920, 1080), rl.NewVector2(1920, 1080))
 
-	rl.InitWindow(int32(screenSetting.ScreenSize.X), int32(screenSetting.ScreenSize.Y), "Map Basics")
+	rl.InitWindow(int32(game.GameSettings.ScreenSetting.ScreenSize.X), int32(game.GameSettings.ScreenSetting.ScreenSize.Y), "Map Basics")
 	defer rl.CloseWindow()
 
 	rl.SetTargetFPS(60)
 
-	world := system.CreateWorld(system.CreateGameCamera(rl.Vector2Scale(screenSetting.ScreenSize, 0.5), rl.Vector2Scale(screenSetting.VirtualScreenSize, 0.5), 0.0, 1.0),
-		rl.LoadRenderTexture(int32(screenSetting.VirtualScreenSize.X), int32(screenSetting.VirtualScreenSize.Y)))
+	world := system.CreateWorld(rl.NewVector2(320, 180))
 	defer world.UnloadWorld()
+
+	source := rl.NewRectangle(0, 0, world.WorldScreenSize.X, -world.WorldScreenSize.Y)
+	viewport := game.GameSettings.ScreenSetting.CalculateViewport(world.WorldScreenSize)
+
 	for !rl.WindowShouldClose() {
-		system.HandleInput(&screenSetting, &world.Camera)
+		system.HandleInput(&game.GameSettings.ScreenSetting, world)
 		world.Draw()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
-		source := rl.NewRectangle(0, 0, screenSetting.VirtualScreenSize.X, -screenSetting.VirtualScreenSize.Y)
-		dest := rl.NewRectangle(screenSetting.DestinationPosition.X, screenSetting.DestinationPosition.Y, screenSetting.DestinationSize.X, screenSetting.DestinationSize.Y)
-		rl.DrawTexturePro(world.RenderTexture.Texture, source, dest, rl.NewVector2(0, 0), 0, rl.White)
+		rl.DrawTexturePro(world.RenderTexture.Texture, source, viewport, rl.NewVector2(0, 0), 0, rl.White)
 		rl.EndDrawing()
 	}
 }
