@@ -13,14 +13,17 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
-	world := system.CreateWorld(rl.NewVector2(320, 180))
+	world := system.CreateWorld(rl.NewVector2(960, 540))
 	defer world.UnloadWorld()
+
+	// mainMenu := system.CreateMainMenu()
 
 	source := rl.NewRectangle(0, 0, world.WorldScreenSize.X, -world.WorldScreenSize.Y)
 	viewport := game.GameSettings.ScreenSetting.CalculateViewport(world.WorldScreenSize)
 
 	for !rl.WindowShouldClose() {
-		system.HandleInput(&game.GameSettings.ScreenSetting, world)
+		system.HandleInput(&game.GameSettings.ScreenSetting, &world)
+		// mainMenu.Draw(*world.RenderTexture)
 		world.Draw()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)

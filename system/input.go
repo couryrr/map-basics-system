@@ -6,10 +6,10 @@ import (
 
 // FIXME: Just making some lazy decisions here.
 var (
-	cameraSpeed float32 = 100.0
+	cameraSpeed float32 = 400.0
 )
 
-func HandleInput(screenSetting *ScreenSetting, world World) {
+func HandleInput(screenSetting *ScreenSetting, world *World) {
 	if rl.IsKeyPressed(rl.KeyF11) {
 		screenSetting.ToggleScreenSize(world.WorldScreenSize)
 	}
@@ -35,6 +35,8 @@ func HandleInput(screenSetting *ScreenSetting, world World) {
 			world.Camera.Camera.Zoom = 1.0
 		}
 	}
+
+	// world.Camera.Camera.Zoom += rl.GetMouseWheelMove();
 
 	target := world.Camera.Camera.Target
 	delta := rl.GetFrameTime()

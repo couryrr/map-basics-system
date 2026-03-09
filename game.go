@@ -13,6 +13,9 @@ type Game struct {
 	GameSettings GameSettings
 }
 
+func (game Game) LoadGame(){}
+func (game Game) SaveGame(){}
+
 func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	return Game{
 		GameSettings: GameSettings{
