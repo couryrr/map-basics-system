@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	worldSize      rl.Vector2 = rl.NewVector2(1920*5, 1080*5)
 	tileSize       float32    = 32
 	chunkSize      float32    = 32
 	chunksToRender float32    = 5
@@ -40,9 +39,6 @@ type TerrainLevel struct {
 }
 
 type World struct {
-	Camera          GameCamera
-	WorldScreenSize rl.Vector2
-	RenderTexture   *rl.RenderTexture2D
 	perlin1         *rl.Image
 	perlin2         *rl.Image
 	perlin3         *rl.Image
@@ -90,11 +86,7 @@ func (w *World) DetermineTile(x, y float32) color.RGBA {
 	return rl.Black
 }
 
-func (w *World) Draw() {
-	target := w.Camera.Camera.Target
-	rl.BeginTextureMode(*w.RenderTexture)
-	rl.ClearBackground(rl.White)
-	rl.BeginMode2D(*w.Camera.Camera)
+func (w *World) Draw(target rl.Vector2) {
 	// Where am I to start in the chunks
 	chunkX := float32(math.Floor(float64(target.X / chunkWorldSize)))
 	chunkY := float32(math.Floor(float64(target.Y / chunkWorldSize)))
@@ -115,16 +107,12 @@ func (w *World) Draw() {
 		}
 	}
 	rl.DrawRectangleLinesEx(rl.NewRectangle(chunkX*chunkWorldSize, chunkY*chunkWorldSize, chunkWorldSize, chunkWorldSize), 1, rl.Red)
-	rl.EndMode2D()
-	rl.EndTextureMode()
-
 }
 
 func (w *World) UnloadWorld() {
 	rl.UnloadImage(w.perlin1)
 	rl.UnloadImage(w.perlin2)
 	rl.UnloadImage(w.perlin3)
-	rl.UnloadRenderTexture(*w.RenderTexture)
 }
 
 func GetPerlin() (*rl.Image, *rl.Image, *rl.Image) {
@@ -145,14 +133,9 @@ func GetPerlin() (*rl.Image, *rl.Image, *rl.Image) {
 	return rl.LoadImage(paths[0]), rl.LoadImage(paths[1]), rl.LoadImage(paths[2])
 }
 
-func CreateWorld(worldScreenSize rl.Vector2) World {
+func CreateWorld() World {
 	perlin1, perlin2, perlin3 := GetPerlin()
-	texture := rl.LoadRenderTexture(int32(worldScreenSize.X), int32(worldScreenSize.Y))
-	camera := CreateGameCamera(rl.NewVector2(float32(perlin1.Width)/2, float32(perlin1.Height)/2), rl.Vector2Scale(worldScreenSize, 0.5), 0.0, 1.0)
 	return World{
-		Camera:          camera,
-		WorldScreenSize: worldScreenSize,
-		RenderTexture:   &texture,
 		perlin1:         perlin1,
 		perlin2:         perlin2,
 		perlin3:         perlin3,

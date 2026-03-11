@@ -4,7 +4,6 @@ import rl "github.com/gen2brain/raylib-go/raylib"
 
 type ScreenSetting struct {
 	IsFullScreen       bool
-	scale              float32
 	WindowedScreenSize rl.Vector2
 	ScreenSize         rl.Vector2
 }
@@ -17,7 +16,7 @@ func CreateScreenSetting(screenSize, windowedScreenSize rl.Vector2) ScreenSettin
 	}
 }
 
-func (ss *ScreenSetting) CalculateViewport(virtualScreenSize rl.Vector2) rl.Rectangle {
+func (ss *ScreenSetting) CalculateViewport(virtualScreenSize rl.Vector2) (rl.Rectangle, float32) {
 	scaleX := ss.ScreenSize.X / virtualScreenSize.X
 	scaleY := ss.ScreenSize.Y / virtualScreenSize.Y
 	scale := min(scaleX, scaleY)
@@ -26,10 +25,10 @@ func (ss *ScreenSetting) CalculateViewport(virtualScreenSize rl.Vector2) rl.Rect
 	destHeight := virtualScreenSize.Y * scale
 	destX := (ss.ScreenSize.X - destWidth) / 2
 	destY := (ss.ScreenSize.Y - destHeight) / 2
-	return rl.NewRectangle(destX, destY, destWidth, destHeight)
+	return rl.NewRectangle(destX, destY, destWidth, destHeight), scale
 }
 
-func (ss *ScreenSetting) ToggleScreenSize(virtualScreenSize rl.Vector2) {
+func (ss *ScreenSetting) ToggleScreenSize() {
 	rl.ToggleFullscreen()
 	newScreenSize := rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 	if !ss.IsFullScreen {

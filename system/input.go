@@ -9,36 +9,36 @@ var (
 	cameraSpeed float32 = 400.0
 )
 
-func HandleInput(screenSetting *ScreenSetting, world *World) {
+func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera) {
 	if rl.IsKeyPressed(rl.KeyF11) {
-		screenSetting.ToggleScreenSize(world.WorldScreenSize)
+		screenSetting.ToggleScreenSize()
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		world.Camera.Camera.Rotation += 90
+		gameCamera.Camera.Rotation += 90
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		world.Camera.Camera.Rotation -= 90
+		gameCamera.Camera.Rotation -= 90
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		world.Camera.Camera.Rotation = 0
+		gameCamera.Camera.Rotation = 0
 	}
 	if rl.IsKeyPressed(rl.KeyTab) {
-		switch world.Camera.CameraMode {
+		switch gameCamera.CameraMode {
 		case CameraModePlanning:
-			world.Camera.ChangeMode(CameraModeBuild)
-			world.Camera.Camera.Zoom = 1.0
+			gameCamera.ChangeMode(CameraModeBuild)
+			gameCamera.Camera.Zoom = 1.0
 		case CameraModeBuild:
-			world.Camera.ChangeMode(CameraModePlanning)
-			world.Camera.Camera.Zoom = 0.5
+			gameCamera.ChangeMode(CameraModePlanning)
+			gameCamera.Camera.Zoom = 0.5
 		default:
-			world.Camera.ChangeMode(CameraModeBuild)
-			world.Camera.Camera.Zoom = 1.0
+			gameCamera.ChangeMode(CameraModeBuild)
+			gameCamera.Camera.Zoom = 1.0
 		}
 	}
 
-	// world.Camera.Camera.Zoom += rl.GetMouseWheelMove();
+	// gameCamera.Camera.Zoom += rl.GetMouseWheelMove();
 
-	target := world.Camera.Camera.Target
+	target := gameCamera.Camera.Target
 	delta := rl.GetFrameTime()
 
 	dx, dy := float32(0), float32(0)
@@ -60,12 +60,12 @@ func HandleInput(screenSetting *ScreenSetting, world *World) {
 		dx *= 0.7071
 		dy *= 0.7071
 	}
-	angle := -world.Camera.Camera.Rotation * rl.Deg2rad
+	angle := -gameCamera.Camera.Rotation * rl.Deg2rad
 	movement := rl.NewVector2(dx, dy)
 	rotated := rl.Vector2Rotate(movement, angle)
 
 	target.X += rotated.X * cameraSpeed * delta
 	target.Y += rotated.Y * cameraSpeed * delta
 
-	world.Camera.Camera.Target = target
+	gameCamera.Camera.Target = target
 }
