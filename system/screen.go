@@ -16,18 +16,6 @@ func CreateScreenSetting(screenSize, windowedScreenSize rl.Vector2) ScreenSettin
 	}
 }
 
-func (ss *ScreenSetting) CalculateViewport(virtualScreenSize rl.Vector2) (rl.Rectangle, float32) {
-	scaleX := ss.ScreenSize.X / virtualScreenSize.X
-	scaleY := ss.ScreenSize.Y / virtualScreenSize.Y
-	scale := min(scaleX, scaleY)
-
-	destWidth := virtualScreenSize.X * scale
-	destHeight := virtualScreenSize.Y * scale
-	destX := (ss.ScreenSize.X - destWidth) / 2
-	destY := (ss.ScreenSize.Y - destHeight) / 2
-	return rl.NewRectangle(destX, destY, destWidth, destHeight), scale
-}
-
 func (ss *ScreenSetting) ToggleScreenSize() {
 	rl.ToggleFullscreen()
 	newScreenSize := rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))

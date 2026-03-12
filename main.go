@@ -13,21 +13,23 @@ func main() {
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(60)
 
-	game.LoadGame()
+	game.Init()
+	defer game.Unload()
+
 	world := system.CreateWorld()
 	defer world.UnloadWorld()
 
 	source := rl.NewRectangle(0, 0, config.VirtualWidth, -config.VirtualHeight)
-	viewport, scale := game.SystemSettings.ScreenSetting.CalculateViewport(rl.NewVector2(config.VirtualWidth, config.VirtualHeight))
+	game.RenderContext.Update(game.SystemSettings.ScreenSetting.ScreenSize)
 
 	igo := system.InGameOverlay{
 		IsCollision: false,
 	}
 
 	for !rl.WindowShouldClose() {
-		system.HandleInput(&game.SystemSettings.ScreenSetting, game.GameCamera)
-		igo.Update(viewport, scale)
-		rl.BeginTextureMode(*game.RenderTexture)
+		system.HandleInput(&game.SystemSettings.ScreenSetting, game.GameCamera, game.RenderContext)
+		igo.Update(game.RenderContext)
+		rl.BeginTextureMode(*game.RenderContext.RenderTexture)
 		rl.ClearBackground(rl.White)
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		world.Draw(game.GameCamera.Camera.Target)
@@ -37,7 +39,7 @@ func main() {
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
-		rl.DrawTexturePro(game.RenderTexture.Texture, source, viewport, rl.NewVector2(0, 0), 0, rl.White)
+		rl.DrawTexturePro(game.RenderContext.RenderTexture.Texture, source, game.RenderContext.Viewport, rl.NewVector2(0, 0), 0, rl.White)
 		rl.EndDrawing()
 	}
 }

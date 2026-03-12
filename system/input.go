@@ -9,9 +9,11 @@ var (
 	cameraSpeed float32 = 400.0
 )
 
-func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera) {
+func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera, rCtx *RenderContext) {
 	if rl.IsKeyPressed(rl.KeyF11) {
 		screenSetting.ToggleScreenSize()
+		rCtx.Update(screenSetting.ScreenSize)
+
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
 		gameCamera.Camera.Rotation += 90

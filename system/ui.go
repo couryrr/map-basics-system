@@ -17,11 +17,10 @@ type InGameOverlay struct {
 	IsCollision bool
 }
 
-func (igo *InGameOverlay) Update(destRec rl.Rectangle, scale float32) {
+func (igo *InGameOverlay) Update(rCtx *RenderContext) {
 	point := rl.GetMousePosition()
-	virtualX := (point.X - destRec.X) / scale
-	virtualY := (point.Y - destRec.Y) / scale
-	igo.IsCollision = rl.CheckCollisionPointRec(rl.NewVector2(virtualX, virtualY), rl.NewRectangle(64, float32(config.VirtualHeight-64), 32, 32))
+	point = rCtx.ScreenToVirtual(point)
+	igo.IsCollision = rl.CheckCollisionPointRec(point, rl.NewRectangle(64, float32(config.VirtualHeight-64), 32, 32))
 }
 func (igo *InGameOverlay) Draw() {
 	posY := config.VirtualHeight - 64

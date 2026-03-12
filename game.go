@@ -12,18 +12,22 @@ type SystemSettings struct {
 
 type Game struct {
 	SystemSettings SystemSettings
-	RenderTexture  *rl.RenderTexture2D
+	RenderContext  *system.RenderContext
 	GameCamera     *system.GameCamera
 }
 
-func (game *Game) LoadGame() {
-	renderTexture := rl.LoadRenderTexture(int32(config.VirtualWidth), int32(config.VirtualHeight))
-	game.RenderTexture = &renderTexture
+func (game *Game) Init() {
+	renderContext := system.CreateRenderContext(
+		config.VirtualWidth,
+		config.VirtualHeight,
+		game.SystemSettings.ScreenSetting.ScreenSize,
+	)
+	game.RenderContext = &renderContext
+
 }
 
-func (game *Game) SaveGame() {}
 func (game *Game) Unload() {
-	rl.UnloadRenderTexture(*game.RenderTexture)
+	rl.UnloadRenderTexture(*game.RenderContext.RenderTexture)
 }
 
 func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
@@ -31,6 +35,7 @@ func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	camera := system.CreateGameCamera(rl.NewVector2(float32(512), float32(512)), rl.NewVector2(config.VirtualWidth/2, config.VirtualHeight/2), 0.0, 1.0)
 	return Game{
 		GameCamera: &camera,
+		RenderContext: nil,
 		SystemSettings: SystemSettings{
 			ScreenSetting: system.CreateScreenSetting(screenSize, windowedScreenSize),
 		},
