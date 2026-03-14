@@ -7,6 +7,7 @@ import (
 	"github.com/couryrr/map-basics-system/system/camera"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/system/setting"
+	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -19,6 +20,7 @@ type Game struct {
 	GameCamera     *camera.GameCamera
 	Player         *player.Player
 	RenderContext  *renderer.RenderContext
+	World          *world.World
 	SystemSettings SystemSettings
 	IsFullScreen   bool
 }
@@ -55,7 +57,17 @@ func (game *Game) Update() {
 	game.GameCamera.Camera.Zoom = game.Player.ZoomLevel
 }
 
+func (game *Game) Draw() {
+	game.World.Draw(game.GameCamera.Camera.Target)
+}
+
+func (game *Game) LoadWorld() {
+	w := world.NewWorld()
+	game.World = &w
+}
+
 func (game *Game) Unload() {
+	game.World.UnloadWorld()
 	rl.UnloadRenderTexture(*game.RenderContext.RenderTexture)
 }
 
