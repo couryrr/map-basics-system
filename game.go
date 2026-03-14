@@ -11,12 +11,15 @@ type SystemSettings struct {
 }
 
 type Game struct {
-	SystemSettings SystemSettings
-	RenderContext  *system.RenderContext
+	Broker         *system.Broker
 	GameCamera     *system.GameCamera
+	Player         *system.Player
+	RenderContext  *system.RenderContext
+	SystemSettings SystemSettings
+	IsFullScreen   bool
 }
 
-func (game *Game) Init() {
+func (game *Game) LoadResources() {
 	renderContext := system.CreateRenderContext(
 		config.VirtualWidth,
 		config.VirtualHeight,
@@ -24,6 +27,28 @@ func (game *Game) Init() {
 	)
 	game.RenderContext = &renderContext
 
+	player := system.CreatePlayer(rl.NewVector2(renderContext.VirtualWidth/2, renderContext.VirtualHeight/2))
+	game.Player = &player
+
+	camera := system.CreateGameCamera(rl.NewVector2(player.Position.X, player.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
+	game.GameCamera = &camera
+}
+
+func (game *Game) ToggleScreenSize(message system.Message) {
+	rl.ToggleFullscreen()
+	newScreenSize := rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
+	if !game.IsFullScreen {
+		newScreenSize = game.SystemSettings.ScreenSetting.WindowedScreenSize
+	}
+	game.SystemSettings.ScreenSetting.ScreenSize = newScreenSize
+	game.IsFullScreen = !game.IsFullScreen
+	game.RenderContext.Update(game.SystemSettings.ScreenSetting.ScreenSize)
+}
+
+func (game *Game) Update() {
+	game.GameCamera.Camera.Rotation = game.Player.Rotation
+	game.GameCamera.Camera.Target = game.Player.Position
+	game.GameCamera.Camera.Zoom = game.Player.ZoomLevel
 }
 
 func (game *Game) Unload() {
@@ -31,10 +56,12 @@ func (game *Game) Unload() {
 }
 
 func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
-	//TODO: This is a hold over until real game loading happens
-	camera := system.CreateGameCamera(rl.NewVector2(float32(512), float32(512)), rl.NewVector2(config.VirtualWidth/2, config.VirtualHeight/2), 0.0, 1.0)
+	// TODO: This will load setting from files.
+	broker := system.CreateBroker()
 	return Game{
-		GameCamera: &camera,
+		Broker:        &broker,
+		Player:        nil,
+		GameCamera:    nil,
 		RenderContext: nil,
 		SystemSettings: SystemSettings{
 			ScreenSetting: system.CreateScreenSetting(screenSize, windowedScreenSize),

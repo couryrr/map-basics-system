@@ -9,28 +9,19 @@ import (
 )
 
 var (
-	tileSize       float32    = 32
-	chunkSize      float32    = 32
-	chunksToRender float32    = 5
-	chunkWorldSize float32    = chunkSize * tileSize
-	terrainColors             = [7]TerrainLevel{
-		{0.10, rl.NewColor(26, 16, 8, 255)},     // Deep Crater
-		{0.25, rl.NewColor(58, 35, 18, 255)},    // Low Basin
+	tileSize       float32 = 32
+	chunkSize      float32 = 32
+	chunksToRender float32 = 5
+	chunkWorldSize float32 = chunkSize * tileSize
+	terrainColors          = [7]TerrainLevel{
+		{0.30, rl.NewColor(26, 16, 8, 255)},     // Deep Crater
+		{0.40, rl.NewColor(58, 35, 18, 255)},    // Low Basin
 		{0.45, rl.NewColor(122, 68, 32, 255)},   // Dark Oxide Flat
 		{0.65, rl.NewColor(178, 95, 45, 255)},   // Rust Plain
-		{0.78, rl.NewColor(196, 148, 88, 255)},  // Scoured Slope
-		{0.88, rl.NewColor(200, 176, 140, 255)}, // Silicate Rock
+		{0.80, rl.NewColor(196, 148, 88, 255)},  // Scoured Slope
+		{0.90, rl.NewColor(200, 176, 140, 255)}, // Silicate Rock
 		{1.00, rl.NewColor(216, 203, 178, 255)}, // Bleached Summit
 	}
-	// terrainColors             = [7]TerrainLevel{
-	// 	{0.30, rl.NewColor(10, 50, 100, 255)},   // Deep Water
-	// 	{0.40, rl.NewColor(30, 100, 160, 255)},  // Shallow Water
-	// 	{0.45, rl.NewColor(210, 190, 140, 255)}, // Sand
-	// 	{0.65, rl.NewColor(90, 160, 70, 255)},   // Grass
-	// 	{0.80, rl.NewColor(40, 100, 40, 255)},   // Forest
-	// 	{0.90, rl.NewColor(130, 120, 110, 255)}, // Mountain
-	// 	{1.00, rl.NewColor(220, 225, 230, 255)}, // Snow Cap
-	// }
 )
 
 type TerrainLevel struct {
@@ -39,10 +30,11 @@ type TerrainLevel struct {
 }
 
 type World struct {
-	perlin1         *rl.Image
-	perlin2         *rl.Image
-	perlin3         *rl.Image
-	tileSize        float32
+	perlin1  *rl.Image
+	perlin2  *rl.Image
+	perlin3  *rl.Image
+	tileSize float32
+	Items    []Item
 }
 
 func (w *World) sampleFBM(worldX, worldY float32) float32 {
@@ -136,9 +128,16 @@ func GetPerlin() (*rl.Image, *rl.Image, *rl.Image) {
 func CreateWorld() World {
 	perlin1, perlin2, perlin3 := GetPerlin()
 	return World{
-		perlin1:         perlin1,
-		perlin2:         perlin2,
-		perlin3:         perlin3,
-		tileSize:        tileSize,
+		perlin1:  perlin1,
+		perlin2:  perlin2,
+		perlin3:  perlin3,
+		tileSize: tileSize,
+		Items: []Item{
+			{Size: rl.NewVector2(1, 1)},
+			{Size: rl.NewVector2(1, 2)},
+			{Size: rl.NewVector2(2, 2)},
+			{Size: rl.NewVector2(3, 2)},
+			{Size: rl.NewVector2(3, 3)},
+		},
 	}
 }

@@ -4,70 +4,51 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// FIXME: Just making some lazy decisions here.
-var (
-	cameraSpeed float32 = 400.0
+const (
+	TopicScreenToggle      Topic = "screen.toggle"
+	TopicPlayerMove        Topic = "player.move"
+	TopicPlayerRotate      Topic = "player.rotate"
+	TopicPlayerRotateReset Topic = "player.rotate.reset"
+	TopicPlayerZoom        Topic = "player.zoom"
 )
 
-func HandleInput(screenSetting *ScreenSetting, gameCamera *GameCamera, rCtx *RenderContext) {
+func HandleInput(broker Broker) {
 	if rl.IsKeyPressed(rl.KeyF11) {
-		screenSetting.ToggleScreenSize()
-		rCtx.Update(screenSetting.ScreenSize)
-
+		broker.Send(TopicScreenToggle, Message{})
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		gameCamera.Camera.Rotation += 90
+		broker.Send(TopicPlayerRotate, Message{Data: float32(90)})
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		gameCamera.Camera.Rotation -= 90
+		broker.Send(TopicPlayerRotate, Message{Data: float32(-90)})
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		gameCamera.Camera.Rotation = 0
+		broker.Send(TopicPlayerRotateReset, Message{})
 	}
-	if rl.IsKeyPressed(rl.KeyTab) {
-		switch gameCamera.CameraMode {
-		case CameraModePlanning:
-			gameCamera.ChangeMode(CameraModeBuild)
-			gameCamera.Camera.Zoom = 1.0
-		case CameraModeBuild:
-			gameCamera.ChangeMode(CameraModePlanning)
-			gameCamera.Camera.Zoom = 0.5
-		default:
-			gameCamera.ChangeMode(CameraModeBuild)
-			gameCamera.Camera.Zoom = 1.0
-		}
+	if wheel := rl.GetMouseWheelMove(); wheel != 0 {
+		broker.Send(TopicPlayerZoom, Message{Data: wheel})
 	}
 
-	// gameCamera.Camera.Zoom += rl.GetMouseWheelMove();
-
-	target := gameCamera.Camera.Target
-	delta := rl.GetFrameTime()
-
-	dx, dy := float32(0), float32(0)
+	direction := rl.Vector2Zero()
 
 	if rl.IsKeyDown(rl.KeyW) {
-		dy -= 1
+		direction.Y -= 1
 	}
 	if rl.IsKeyDown(rl.KeyS) {
-		dy += 1
+		direction.Y += 1
 	}
 	if rl.IsKeyDown(rl.KeyA) {
-		dx -= 1
+		direction.X -= 1
 	}
 	if rl.IsKeyDown(rl.KeyD) {
-		dx += 1
+		direction.X += 1
 	}
 
-	if dx != 0 && dy != 0 {
-		dx *= 0.7071
-		dy *= 0.7071
+	if direction.X != 0 && direction.Y != 0 {
+		direction = rl.Vector2Scale(direction, 0.7071)
 	}
-	angle := -gameCamera.Camera.Rotation * rl.Deg2rad
-	movement := rl.NewVector2(dx, dy)
-	rotated := rl.Vector2Rotate(movement, angle)
 
-	target.X += rotated.X * cameraSpeed * delta
-	target.Y += rotated.Y * cameraSpeed * delta
-
-	gameCamera.Camera.Target = target
+	if !rl.Vector2Equals(direction, rl.Vector2Zero()) {
+		broker.Send(TopicPlayerMove, Message{Data: direction})
+	}
 }
