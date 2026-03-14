@@ -1,4 +1,4 @@
-package system
+package pubsub
 
 type Topic string
 
@@ -13,7 +13,7 @@ type Broker struct {
 	callbacks map[Topic][]Callback
 }
 
-func CreateBroker() Broker {
+func NewBroker() Broker {
 	return Broker{
 		callbacks: make(map[Topic][]Callback),
 	}

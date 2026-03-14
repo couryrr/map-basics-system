@@ -1,4 +1,4 @@
-package system
+package renderer
 
 import rl "github.com/gen2brain/raylib-go/raylib"
 
@@ -37,8 +37,7 @@ func (rc *RenderContext) VirtualToScreen(virtualPos rl.Vector2) rl.Vector2 {
 	)
 }
 
-// system/render_context.go
-func CreateRenderContext(virtualWidth, virtualHeight float32, screenSize rl.Vector2) RenderContext {
+func NewRenderContext(virtualWidth, virtualHeight float32, screenSize rl.Vector2) RenderContext {
 	renderTexture := rl.LoadRenderTexture(int32(virtualWidth), int32(virtualHeight))
 
 	ctx := RenderContext{

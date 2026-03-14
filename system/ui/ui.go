@@ -1,9 +1,11 @@
-package system
+package ui
 
 import (
 	"fmt"
 
 	"github.com/couryrr/map-basics-system/config"
+	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -19,7 +21,7 @@ type InGameOverlay struct {
 }
 
 // TODO: intentionally bad atm just getting some item functioning
-func (igo *InGameOverlay) Draw(world World, rCtx *RenderContext) {
+func (igo *InGameOverlay) Draw(world world.World, rCtx *renderer.RenderContext) {
 	posY := config.VirtualHeight - 64
 	sizeX := config.VirtualWidth - 128
 	rl.DrawRectangleLinesEx(rl.NewRectangle(64, float32(posY), float32(sizeX), 64), 1, rl.DarkGray)

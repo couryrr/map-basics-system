@@ -1,4 +1,4 @@
-package system
+package setting
 
 import rl "github.com/gen2brain/raylib-go/raylib"
 
@@ -7,7 +7,7 @@ type ScreenSetting struct {
 	ScreenSize         rl.Vector2
 }
 
-func CreateScreenSetting(screenSize, windowedScreenSize rl.Vector2) ScreenSetting {
+func NewScreenSetting(screenSize, windowedScreenSize rl.Vector2) ScreenSetting {
 	return ScreenSetting{
 		ScreenSize:         screenSize,
 		WindowedScreenSize: windowedScreenSize,

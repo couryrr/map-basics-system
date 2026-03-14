@@ -2,39 +2,43 @@ package main
 
 import (
 	"github.com/couryrr/map-basics-system/config"
-	"github.com/couryrr/map-basics-system/system"
+	"github.com/couryrr/map-basics-system/entity/player"
+	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/system/camera"
+	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/system/setting"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type SystemSettings struct {
-	ScreenSetting system.ScreenSetting
+	ScreenSetting setting.ScreenSetting
 }
 
 type Game struct {
-	Broker         *system.Broker
-	GameCamera     *system.GameCamera
-	Player         *system.Player
-	RenderContext  *system.RenderContext
+	Broker         *pubsub.Broker
+	GameCamera     *camera.GameCamera
+	Player         *player.Player
+	RenderContext  *renderer.RenderContext
 	SystemSettings SystemSettings
 	IsFullScreen   bool
 }
 
 func (game *Game) LoadResources() {
-	renderContext := system.CreateRenderContext(
+	renderContext := renderer.NewRenderContext(
 		config.VirtualWidth,
 		config.VirtualHeight,
 		game.SystemSettings.ScreenSetting.ScreenSize,
 	)
 	game.RenderContext = &renderContext
 
-	player := system.CreatePlayer(rl.NewVector2(renderContext.VirtualWidth/2, renderContext.VirtualHeight/2))
-	game.Player = &player
+	p1 := player.NewPlayer(rl.NewVector2(renderContext.VirtualWidth/2, renderContext.VirtualHeight/2))
+	game.Player = &p1
 
-	camera := system.CreateGameCamera(rl.NewVector2(player.Position.X, player.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
-	game.GameCamera = &camera
+	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
+	game.GameCamera = &cam
 }
 
-func (game *Game) ToggleScreenSize(message system.Message) {
+func (game *Game) ToggleScreenSize(message pubsub.Message) {
 	rl.ToggleFullscreen()
 	newScreenSize := rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 	if !game.IsFullScreen {
@@ -55,16 +59,16 @@ func (game *Game) Unload() {
 	rl.UnloadRenderTexture(*game.RenderContext.RenderTexture)
 }
 
-func CreateGame(windowedScreenSize, screenSize rl.Vector2) Game {
+func NewGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	// TODO: This will load setting from files.
-	broker := system.CreateBroker()
+	broker := pubsub.NewBroker()
 	return Game{
 		Broker:        &broker,
 		Player:        nil,
 		GameCamera:    nil,
 		RenderContext: nil,
 		SystemSettings: SystemSettings{
-			ScreenSetting: system.CreateScreenSetting(screenSize, windowedScreenSize),
+			ScreenSetting: setting.NewScreenSetting(screenSize, windowedScreenSize),
 		},
 	}
 }

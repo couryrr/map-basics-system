@@ -1,6 +1,9 @@
-package system
+package player
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"github.com/couryrr/map-basics-system/system/pubsub"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 type Item struct {
 	Position rl.Vector2
@@ -20,7 +23,7 @@ type Player struct {
 	ZoomLevel float32
 }
 
-func CreatePlayer(start rl.Vector2) Player {
+func NewPlayer(start rl.Vector2) Player {
 	return Player{
 		Position:  start,
 		Rotation:  0,
@@ -29,24 +32,24 @@ func CreatePlayer(start rl.Vector2) Player {
 	}
 }
 
-func (player *Player) Rotate(message Message) {
+func (player *Player) Rotate(message pubsub.Message) {
 	if rotation, ok := message.Data.(float32); ok {
 		player.Rotation += rotation
 	}
 }
 
-func (player *Player) RotateReset(message Message) {
+func (player *Player) RotateReset(message pubsub.Message) {
 	player.Rotation = 0
 }
 
-func (player *Player) Zoom(message Message) {
+func (player *Player) Zoom(message pubsub.Message) {
 	if delta, ok := message.Data.(float32); ok {
 		player.ZoomLevel += delta * zoomStep
 		player.ZoomLevel = rl.Clamp(player.ZoomLevel, zoomMin, zoomMax)
 	}
 }
 
-func (player *Player) Move(message Message) {
+func (player *Player) Move(message pubsub.Message) {
 	if movement, ok := message.Data.(rl.Vector2); ok {
 		delta := rl.GetFrameTime()
 		angle := -player.Rotation * rl.Deg2rad
@@ -54,5 +57,4 @@ func (player *Player) Move(message Message) {
 		player.Position.X += rotated.X * player.Speed * delta
 		player.Position.Y += rotated.Y * player.Speed * delta
 	}
-
 }
