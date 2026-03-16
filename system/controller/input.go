@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -11,9 +13,10 @@ const (
 	TopicInputRotate      pubsub.Topic = "input.rotate"
 	TopicInputRotateReset pubsub.Topic = "input.rotate.reset"
 	TopicInputZoom        pubsub.Topic = "input.zoom"
+	TopicInputCursorMoved pubsub.Topic = "input.cursor.moved"
 )
 
-func HandleInput(broker *pubsub.Broker) {
+func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 	if rl.IsKeyPressed(rl.KeyF11) {
 		broker.Send(TopicScreenToggle, pubsub.Message{})
 	}
@@ -26,6 +29,17 @@ func HandleInput(broker *pubsub.Broker) {
 	if rl.IsKeyPressed(rl.KeyC) {
 		broker.Send(TopicInputRotateReset, pubsub.Message{})
 	}
+
+	delta := rl.GetMouseDelta()
+	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
+		rl.TraceLog(rl.LogInfo, "In the mouse")
+		broker.Send(TopicInputCursorMoved, pubsub.Message{Data: rCtx.ScreenToVirtual(rl.GetMousePosition())})
+	}
+
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		broker.Send(player.TopicPlayerHotbarSlotSelected, pubsub.Message{Data: player.HotbarInteractionMessage{}})
+	}
+
 	if wheel := rl.GetMouseWheelMove(); wheel != 0 {
 		broker.Send(TopicInputZoom, pubsub.Message{Data: wheel})
 	}

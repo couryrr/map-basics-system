@@ -3,7 +3,6 @@ package pubsub
 type Topic string
 
 type Message struct {
-	Id   string
 	Data any
 }
 

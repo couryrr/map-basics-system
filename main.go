@@ -16,29 +16,31 @@ func main() {
 	game.LoadResources()
 	game.LoadWorld()
 
-	game.Broker.Register(controller.TopicScreenToggle, game.ToggleScreenSize)
-	game.Broker.Register(controller.TopicInputRotate, game.Player.Rotate)
-	game.Broker.Register(controller.TopicInputRotateReset, game.Player.RotateReset)
-	game.Broker.Register(controller.TopicInputMove, game.Player.Move)
-	game.Broker.Register(controller.TopicInputZoom, game.Player.Zoom)
-
 	defer game.Unload()
 	defer rl.CloseWindow()
 
 	source := rl.NewRectangle(0, 0, config.VirtualWidth, -config.VirtualHeight)
 	game.RenderContext.Update(game.SystemSettings.ScreenSetting.ScreenSize)
 
-	igo := ui.InGameOverlay{}
+	igo := ui.NewInGameOverlay(game.Broker, game.RenderContext)
+
+	game.Broker.Register(controller.TopicScreenToggle, game.ToggleScreenSize)
+	game.Broker.Register(controller.TopicInputRotate, game.Player.Rotate)
+	game.Broker.Register(controller.TopicInputRotateReset, game.Player.RotateReset)
+	game.Broker.Register(controller.TopicInputMove, game.Player.Move)
+	game.Broker.Register(controller.TopicInputZoom, game.Player.Zoom)
+	game.Broker.Register(controller.TopicInputCursorMoved, igo.CheckIntersection)
+	game.Broker.Register(ui.TopicUiHotbarElementHovered, game.Player.HighlightHotbarItem)
 
 	for !rl.WindowShouldClose() {
-		controller.HandleInput(game.Broker)
+		controller.HandleInput(game.Broker, game.RenderContext)
 		game.Update()
 		rl.BeginTextureMode(*game.RenderContext.RenderTexture)
 		rl.ClearBackground(rl.White)
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		igo.Draw(*game.World, game.RenderContext)
+		igo.Draw(*game.Player, game.RenderContext)
 		rl.EndTextureMode()
 
 		rl.BeginDrawing()

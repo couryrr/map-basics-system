@@ -1,12 +1,10 @@
 package world
 
 import (
+	rl "github.com/gen2brain/raylib-go/raylib"
 	"image/color"
 	"math"
 	"os"
-
-	"github.com/couryrr/map-basics-system/entity/player"
-	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -35,7 +33,6 @@ type World struct {
 	perlin2  *rl.Image
 	perlin3  *rl.Image
 	tileSize float32
-	Items    []player.Item
 }
 
 func (w *World) sampleFBM(worldX, worldY float32) float32 {
@@ -133,12 +130,5 @@ func NewWorld() World {
 		perlin2:  perlin2,
 		perlin3:  perlin3,
 		tileSize: tileSize,
-		Items: []player.Item{
-			{Size: rl.NewVector2(1, 1)},
-			{Size: rl.NewVector2(1, 2)},
-			{Size: rl.NewVector2(2, 2)},
-			{Size: rl.NewVector2(3, 2)},
-			{Size: rl.NewVector2(3, 3)},
-		},
 	}
 }
