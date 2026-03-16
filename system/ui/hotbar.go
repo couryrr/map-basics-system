@@ -13,6 +13,7 @@ type HotbarAction string
 const (
 	TopicUiHotbarInteraction pubsub.Topic = "ui.hotbar.interaction"
 	HotbarActionHover        HotbarAction = "hover"
+	HotbarActionLeave        HotbarAction = "leave"
 )
 
 type HotbarInteractionMessage struct {

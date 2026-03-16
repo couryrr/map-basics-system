@@ -28,6 +28,10 @@ func (igo *InGameOverlay) CheckIntersection(messge pubsub.Message) {
 			if ir != nil {
 				igo.broker.Send(ir.Topic, ir.Message)
 			}
+		} else {
+			igo.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
+				Data: HotbarInteractionMessage{Action: HotbarActionLeave},
+			})
 		}
 	}
 }

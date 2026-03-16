@@ -68,6 +68,8 @@ func (player *Player) HandleHotbarInteraction(message pubsub.Message) {
 		switch hbim.Action {
 		case ui.HotbarActionHover:
 			player.Hotbar.SetActive(&hbim.Slot)
+		case ui.HotbarActionLeave:
+			player.Hotbar.Clear()
 		}
 	}
 }
