@@ -13,4 +13,3 @@ func NewScreenSetting(screenSize, windowedScreenSize rl.Vector2) ScreenSetting {
 		WindowedScreenSize: windowedScreenSize,
 	}
 }
-

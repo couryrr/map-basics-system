@@ -2,6 +2,7 @@ package player
 
 import (
 	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/system/ui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -12,15 +13,13 @@ const (
 	TopicPlayerHotbarSlotSelected pubsub.Topic = "player.hotbar.slot.selected"
 )
 
-type HotbarInteractionMessage struct {
-	Slot   int32
-	ItemId string
-}
-
 type Hotbar struct {
 	Slots      [6]string
 	ActiveSlot *int32
 }
+
+func (h *Hotbar) SlotItem(i int) string { return h.Slots[i] }
+func (h *Hotbar) GetActiveSlot() *int32 { return h.ActiveSlot }
 
 func (h *Hotbar) SetActive(slot *int32) {
 	h.ActiveSlot = slot
@@ -30,9 +29,6 @@ func (h *Hotbar) Assign(slot int32, itemID string) {
 }
 func (h *Hotbar) Clear() {
 	h.ActiveSlot = nil
-}
-func (h *Hotbar) ActiveItem() string {
-	return h.ActiveItem()
 }
 
 type Player struct {
@@ -62,21 +58,17 @@ func NewPlayer(start rl.Vector2) Player {
 }
 
 func (player *Player) AddHotbarItem(message pubsub.Message) {
-	if hbim, ok := message.Data.(HotbarInteractionMessage); ok {
+	if hbim, ok := message.Data.(ui.HotbarInteractionMessage); ok {
 		player.Hotbar.Assign(hbim.Slot, hbim.ItemId)
 	}
 }
 
-func (player *Player) SelectHotbarItem(message pubsub.Message) {
-	if hbim, ok := message.Data.(HotbarInteractionMessage); ok {
-		player.Hotbar.SetActive(&hbim.Slot)
-	}
-}
-
-func (player *Player) HighlightHotbarItem(message pubsub.Message) {
-	if index, ok := message.Data.(*int32); ok {
-		rl.TraceLog(rl.LogInfo, "AHHHHHHHHHHH: %d", *index)
-		player.Hotbar.SetActive(index)
+func (player *Player) HandleHotbarInteraction(message pubsub.Message) {
+	if hbim, ok := message.Data.(ui.HotbarInteractionMessage); ok {
+		switch hbim.Action {
+		case ui.HotbarActionHover:
+			player.Hotbar.SetActive(&hbim.Slot)
+		}
 	}
 }
 

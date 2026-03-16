@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -32,12 +31,7 @@ func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 
 	delta := rl.GetMouseDelta()
 	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		rl.TraceLog(rl.LogInfo, "In the mouse")
 		broker.Send(TopicInputCursorMoved, pubsub.Message{Data: rCtx.ScreenToVirtual(rl.GetMousePosition())})
-	}
-
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		broker.Send(player.TopicPlayerHotbarSlotSelected, pubsub.Message{Data: player.HotbarInteractionMessage{}})
 	}
 
 	if wheel := rl.GetMouseWheelMove(); wheel != 0 {

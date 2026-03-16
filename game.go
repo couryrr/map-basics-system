@@ -3,10 +3,11 @@ package main
 import (
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
-	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/camera"
+	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/system/setting"
+	"github.com/couryrr/map-basics-system/system/ui"
 	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -65,6 +66,9 @@ func (game *Game) LoadWorld() {
 	w := world.NewWorld()
 	game.World = &w
 }
+
+func (game *Game) GetHotbarState() ui.HotbarState            { return &game.Player.Hotbar }
+func (game *Game) GetRenderContext() *renderer.RenderContext { return game.RenderContext }
 
 func (game *Game) Unload() {
 	game.World.UnloadWorld()

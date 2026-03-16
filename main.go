@@ -30,7 +30,7 @@ func main() {
 	game.Broker.Register(controller.TopicInputMove, game.Player.Move)
 	game.Broker.Register(controller.TopicInputZoom, game.Player.Zoom)
 	game.Broker.Register(controller.TopicInputCursorMoved, igo.CheckIntersection)
-	game.Broker.Register(ui.TopicUiHotbarElementHovered, game.Player.HighlightHotbarItem)
+	game.Broker.Register(ui.TopicUiHotbarInteraction, game.Player.HandleHotbarInteraction)
 
 	for !rl.WindowShouldClose() {
 		controller.HandleInput(game.Broker, game.RenderContext)
@@ -40,7 +40,7 @@ func main() {
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		igo.Draw(*game.Player, game.RenderContext)
+		igo.Draw(&game)
 		rl.EndTextureMode()
 
 		rl.BeginDrawing()
