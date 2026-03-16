@@ -3,12 +3,14 @@ package ui
 import (
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/system/resource"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type DrawContext interface {
 	GetHotbarState() HotbarState
 	GetRenderContext() *renderer.RenderContext
+	GetItemFromDirectory(itemId string) (*resource.GameItem, error)
 }
 
 type InteractionResult struct {
@@ -37,7 +39,7 @@ func (igo *InGameOverlay) CheckIntersection(messge pubsub.Message) {
 }
 
 func (igo *InGameOverlay) Draw(ctx DrawContext) {
-	igo.hotbar.Draw(ctx.GetHotbarState(), ctx.GetRenderContext())
+	igo.hotbar.Draw(ctx)
 }
 
 func NewInGameOverlay(broker *pubsub.Broker, rCtx *renderer.RenderContext) InGameOverlay {

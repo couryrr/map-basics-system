@@ -1,0 +1,95 @@
+{
+"items" :{
+  "stone_wall": {
+    "id": "stone_wall",
+    "name": "Stone Wall",
+    "category": "defense",
+    "shape": "rectangle",
+    "dimensions": { "X": 32, "Y": 32 },
+    "color": { "R": 150, "G": 150, "B": 150, "A": 255 },
+    "sprite": ""
+  },
+  "smelter": {
+    "id": "smelter",
+    "name": "Smelter",
+    "category": "production",
+    "shape": "rectangle",
+    "dimensions": { "X": 96, "Y": 96 },
+    "color": { "R": 180, "G": 80, "B": 40, "A": 255 },
+    "sprite": ""
+  },
+  "assembler": {
+    "id": "assembler",
+    "name": "Assembler",
+    "category": "production",
+    "shape": "rectangle",
+    "dimensions": { "X": 128, "Y": 128 },
+    "color": { "R": 60, "G": 120, "B": 180, "A": 255 },
+    "sprite": ""
+  },
+  "conveyor": {
+    "id": "conveyor",
+    "name": "Conveyor Belt",
+    "category": "logistics",
+    "shape": "rectangle",
+    "dimensions": { "X": 32, "Y": 32 },
+    "color": { "R": 220, "G": 180, "B": 40, "A": 255 },
+    "sprite": ""
+  },
+  "small_storage": {
+    "id": "small_storage",
+    "name": "Small Storage",
+    "category": "storage",
+    "shape": "rectangle",
+    "dimensions": { "X": 64, "Y": 64 },
+    "color": { "R": 160, "G": 110, "B": 60, "A": 255 },
+    "sprite": ""
+  },
+  "large_storage": {
+    "id": "large_storage",
+    "name": "Large Storage",
+    "category": "storage",
+    "shape": "rectangle",
+    "dimensions": { "X": 96, "Y": 96 },
+    "color": { "R": 120, "G": 140, "B": 160, "A": 255 },
+    "sprite": ""
+  },
+  "extractor": {
+    "id": "extractor",
+    "name": "Extractor",
+    "category": "extraction",
+    "shape": "rectangle",
+    "dimensions": { "X": 96, "Y": 96 },
+    "color": { "R": 160, "G": 60, "B": 40, "A": 255 },
+    "sprite": ""
+  },
+  "transfer_arm": {
+    "id": "transfer_arm",
+    "name": "Transfer Arm",
+    "category": "logistics",
+    "shape": "rectangle",
+    "dimensions": { "X": 32, "Y": 32 },
+    "color": { "R": 200, "G": 160, "B": 40, "A": 255 },
+    "sprite": ""
+  },
+  "power_pole": {
+    "id": "power_pole",
+    "name": "Power Pole",
+    "category": "power",
+    "shape": "rectangle",
+    "dimensions": { "X": 32, "Y": 64 },
+    "color": { "R": 80, "G": 80, "B": 160, "A": 255 },
+    "sprite": ""
+  },
+  "generator": {
+    "id": "generator",
+    "name": "Generator",
+    "category": "power",
+    "shape": "rectangle",
+    "dimensions": { "X": 96, "Y": 96 },
+    "color": { "R": 80, "G": 160, "B": 100, "A": 255 },
+    "sprite": ""
+  }
+}
+}
+

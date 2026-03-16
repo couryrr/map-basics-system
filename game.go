@@ -6,6 +6,7 @@ import (
 	"github.com/couryrr/map-basics-system/system/camera"
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/system/resource"
 	"github.com/couryrr/map-basics-system/system/setting"
 	"github.com/couryrr/map-basics-system/system/ui"
 	"github.com/couryrr/map-basics-system/world"
@@ -19,6 +20,7 @@ type SystemSettings struct {
 type Game struct {
 	Broker         *pubsub.Broker
 	GameCamera     *camera.GameCamera
+	Directory      *resource.Directory
 	Player         *player.Player
 	RenderContext  *renderer.RenderContext
 	World          *world.World
@@ -39,6 +41,9 @@ func (game *Game) LoadResources() {
 
 	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
 	game.GameCamera = &cam
+
+	directory := resource.NewDirectory()
+	game.Directory = directory
 }
 
 func (game *Game) ToggleScreenSize(message pubsub.Message) {
@@ -67,8 +72,12 @@ func (game *Game) LoadWorld() {
 	game.World = &w
 }
 
+//TODO: some more thinking on this idea
 func (game *Game) GetHotbarState() ui.HotbarState            { return &game.Player.Hotbar }
 func (game *Game) GetRenderContext() *renderer.RenderContext { return game.RenderContext }
+func (game *Game) GetItemFromDirectory(itemId string) (*resource.GameItem, error) {
+	return game.Directory.GetItemById(itemId)
+}
 
 func (game *Game) Unload() {
 	game.World.UnloadWorld()

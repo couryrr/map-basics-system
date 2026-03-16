@@ -4,6 +4,8 @@ APP_NAME := map-basics
 MAIN_FILE := .
 BUILD_DIR := bin
 WINDOWS_DEPLOY_PATH := /mnt/c/Users/Coury/Devlopment/map-basics.exe
+WINDOWS_DEPLOY_DIR  := $(dir $(WINDOWS_DEPLOY_PATH))
+ASSETS_DIR          := assets
 
 # Default target
 .PHONY: all
@@ -18,6 +20,7 @@ windows:
 		go build -ldflags "-s -w" -o $(BUILD_DIR)/$(APP_NAME).exe $(MAIN_FILE)
 	@echo "Copying to Windows deployment location..."
 	cp $(BUILD_DIR)/$(APP_NAME).exe $(WINDOWS_DEPLOY_PATH)
+	cp -r $(ASSETS_DIR) $(WINDOWS_DEPLOY_DIR)
 	@echo "✅ Windows build complete: $(WINDOWS_DEPLOY_PATH)"
 
 # Build only (no deploy)
@@ -34,6 +37,7 @@ build:
 deploy:
 	@echo "Deploying to Windows..."
 	cp $(BUILD_DIR)/$(APP_NAME).exe $(WINDOWS_DEPLOY_PATH)
+	cp -r $(ASSETS_DIR) $(WINDOWS_DEPLOY_DIR)
 	@echo "✅ Deployed to: $(WINDOWS_DEPLOY_PATH)"
 
 # Clean build artifacts

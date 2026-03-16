@@ -68,11 +68,22 @@ func NewHotbar(rCtx *renderer.RenderContext) HotbarElement {
 	}
 }
 
-func (hb *HotbarElement) Draw(state HotbarState, rCtx *renderer.RenderContext) {
+func (hb *HotbarElement) Draw(ctx DrawContext) {
 	rl.DrawRectangleLinesEx(hb.Bound, 1, rl.DarkGray)
+	state := ctx.GetHotbarState()
 	for i, slot := range hb.Slots {
-		rl.DrawText(fmt.Sprintf("%s", state.SlotItem(i)), int32(slot.Bound.X+2), int32(slot.Bound.Y+2), 12, rl.DarkBlue)
 		rl.DrawRectangleLinesEx(slot.Bound, float32(1), rl.DarkBlue)
+
+		itemId := state.SlotItem(i)
+		if itemId != "" {
+			item, err := ctx.GetItemFromDirectory(itemId)
+			if err != nil {
+				rl.TraceLog(rl.LogInfo, err.Error())
+			} else {
+				rl.DrawText(fmt.Sprintf("%s", item.Name), int32(slot.Bound.X+2), int32(slot.Bound.Y+2), 12, item.Color)
+			}
+		}
+
 		ii := int32(i)
 		if state.GetActiveSlot() != nil {
 			if *state.GetActiveSlot() == ii {
