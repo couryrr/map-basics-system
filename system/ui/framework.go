@@ -18,6 +18,7 @@ const (
 type Element interface {
 	Draw(ctx DrawContext)
 	Bounds() rl.Rectangle
+	SetBounds(rl.Rectangle)
 	Children() []Element
 }
 
@@ -126,9 +127,57 @@ func (c *Container) Draw(ctx DrawContext) {
 	}
 }
 
-func (c *Container) Bounds() rl.Rectangle { return c.bounds }
-func (c *Container) Children() []Element  { return c.children }
-func (c *Container) AddChild(e Element)   { c.children = append(c.children, e) }
+func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
+func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
+func (c *Container) Children() []Element      { return c.children }
+func (c *Container) AddChild(e Element) {
+	c.children = append(c.children, e)
+	c.applyLayout()
+}
+
+func (c *Container) applyLayout() {
+	n := len(c.children)
+	if n == 0 || c.Layout == LayoutNone {
+		return
+	}
+
+	p := c.Style.Padding
+	g := c.Style.Gap
+
+	switch c.Layout {
+	case LayoutHorizontal:
+		slotW := (c.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
+		slotH := c.bounds.Height - p*2
+		x := c.bounds.X + p
+		for _, child := range c.children {
+			child.SetBounds(rl.NewRectangle(x, c.bounds.Y+p, slotW, slotH))
+			x += slotW + g
+		}
+	case LayoutVertical:
+		slotW := c.bounds.Width - p*2
+		slotH := (c.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
+		y := c.bounds.Y + p
+		for _, child := range c.children {
+			child.SetBounds(rl.NewRectangle(c.bounds.X+p, y, slotW, slotH))
+			y += slotH + g
+		}
+	case LayoutGrid:
+		cols := c.Columns
+		if cols <= 0 {
+			cols = 1
+		}
+		rows := (n + cols - 1) / cols
+		slotW := (c.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
+		slotH := (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+		for i, child := range c.children {
+			col := i % cols
+			row := i / cols
+			x := c.bounds.X + p + float32(col)*(slotW+g)
+			y := c.bounds.Y + p + float32(row)*(slotH+g)
+			child.SetBounds(rl.NewRectangle(x, y, slotW, slotH))
+		}
+	}
+}
 
 func NewContainer(bound rl.Rectangle, layout Layout, opts ...func(*Style)) Container {
 	s := DefaultStyle()
