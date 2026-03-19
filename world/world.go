@@ -33,6 +33,8 @@ type World struct {
 	perlin2  *rl.Image
 	perlin3  *rl.Image
 	tileSize float32
+
+	Registry *Registry
 }
 
 func (w *World) sampleFBM(worldX, worldY float32) float32 {
@@ -125,10 +127,12 @@ func GetPerlin() (*rl.Image, *rl.Image, *rl.Image) {
 
 func NewWorld() World {
 	perlin1, perlin2, perlin3 := GetPerlin()
+	registry := NewRegistry()
 	return World{
 		perlin1:  perlin1,
 		perlin2:  perlin2,
 		perlin3:  perlin3,
 		tileSize: tileSize,
+		Registry: &registry,
 	}
 }

@@ -1,9 +1,11 @@
-package resource
+package world
 
 import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"iter"
+	"maps"
 	"os"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -18,35 +20,35 @@ type GameItem struct {
 	Sprite     string     `json:"sprite"`
 }
 
-type Directory struct {
-	Items map[string]GameItem `json:"items"`
+type Registry struct {
+	items map[string]GameItem
 }
 
-func (d *Directory) GetItemById(itemId string) (*GameItem, error) {
-	if gameItem, ok := d.Items[itemId]; ok {
+func (r *Registry) GetItems() iter.Seq2[string, GameItem] {
+	return maps.All(r.items)
+}
+
+func (r *Registry) GetItemById(itemId string) (*GameItem, error) {
+	if gameItem, ok := r.items[itemId]; ok {
 		return &gameItem, nil
 	}
 
 	return nil, fmt.Errorf("Item not found for: %s", itemId)
 }
 
-func NewDirectory() *Directory {
-
-	//TODO: This is going to be read from a directory based on os.
+func NewRegistry() Registry {
 	directoryJson := "./assets/directory.json"
 	file, err := os.ReadFile(directoryJson)
 	if err != nil {
 		rl.TraceLog(rl.LogInfo, "This is it: %v", err)
 		panic(err)
 	}
-
-	directory := &Directory{}
-	err = json.Unmarshal(file, directory)
+	registry := Registry{}
+	err = json.Unmarshal(file, &registry.items)
 	if err != nil {
 		rl.TraceLog(rl.LogInfo, "This is it 2: %v", err)
 		panic(err)
 	}
-	rl.TraceLog(rl.LogInfo, "%v", directory)
 
-	return directory
+	return registry
 }

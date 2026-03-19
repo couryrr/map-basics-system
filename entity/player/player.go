@@ -41,9 +41,10 @@ type Player struct {
 
 func NewPlayer(start rl.Vector2) Player {
 	slots := [6]string{
-		"extractor",
+		"drone",
+		"stockpile",
 	}
-	slots[5] = "small_storage"
+	slots[5] = "sieve"
 	return Player{
 		Position:  start,
 		Rotation:  0,

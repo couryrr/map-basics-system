@@ -1,10 +1,7 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/couryrr/map-basics-system/system/pubsub"
-	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -32,63 +29,21 @@ type HotbarItemElement struct {
 }
 
 type HotbarElement struct {
-	Bound rl.Rectangle
-	Slots [6]HotbarItemElement
+	container Container
 }
 
-func (hb HotbarElement) HandleIntersection(point rl.Vector2) *InteractionResult {
-	for i := range hb.Slots {
-		if rl.CheckCollisionPointRec(point, hb.Slots[i].Bound) {
-			return &InteractionResult{
-				Topic: TopicUiHotbarInteraction,
-				Message: pubsub.Message{Data: HotbarInteractionMessage{
-					Slot:   int32(i),
-					Action: HotbarActionHover,
-				}},
-			}
-		}
-	}
+func (e HotbarElement) Bounds() rl.Rectangle         { return e.container.bounds }
+func (e HotbarElement) SetBounds(bound rl.Rectangle) { e.container.bounds = bound }
+func (e HotbarElement) Children() []Element          { return e.container.Children() }
+func (e HotbarElement) AddChild(ce Element)          { e.container.AddChild(ce) }
+func (e HotbarElement) Draw(ctx DrawContext)         { e.container.Draw(ctx) }
+
+func (e HotbarElement) HandleIntersection(point rl.Vector2) *InteractionResult {
 	return nil
 }
 
-func NewHotbar(rCtx *renderer.RenderContext) HotbarElement {
-	posY := rCtx.VirtualHeight - 64
-	sizeX := rCtx.VirtualWidth - 128
-
-	slots := new([6]HotbarItemElement)
-	for i := range 6 {
-		pos := rl.NewVector2(float32(64+i*32), float32(posY))
-		slots[i] = HotbarItemElement{
-			Bound: rl.NewRectangle(pos.X, posY, 32, 32),
-		}
-	}
-	return HotbarElement{
-		Bound: rl.NewRectangle(64, float32(posY), float32(sizeX), 64),
-		Slots: *slots,
-	}
-}
-
-func (hb *HotbarElement) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(hb.Bound, 1, rl.DarkGray)
-	state := ctx.GetHotbarState()
-	for i, slot := range hb.Slots {
-		rl.DrawRectangleLinesEx(slot.Bound, float32(1), rl.DarkBlue)
-
-		itemId := state.SlotItem(i)
-		if itemId != "" {
-			item, err := ctx.GetItemFromDirectory(itemId)
-			if err != nil {
-				rl.TraceLog(rl.LogInfo, err.Error())
-			} else {
-				rl.DrawText(fmt.Sprintf("%s", item.Name), int32(slot.Bound.X+2), int32(slot.Bound.Y+2), 12, item.Color)
-			}
-		}
-
-		ii := int32(i)
-		if state.GetActiveSlot() != nil {
-			if *state.GetActiveSlot() == ii {
-				rl.DrawRectangleLinesEx(slot.Bound, float32(5), rl.Red)
-			}
-		}
+func NewHotbarElement(bounds rl.Rectangle) *HotbarElement {
+	return &HotbarElement{
+		container: NewContainer(bounds, LayoutNone, WithHeight(48), WithOffset(0, bounds.Height-48), WithBorder(1, rl.DarkGray)),
 	}
 }

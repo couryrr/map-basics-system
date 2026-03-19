@@ -22,14 +22,12 @@ func main() {
 	source := rl.NewRectangle(0, 0, config.VirtualWidth, -config.VirtualHeight)
 	game.RenderContext.Update(game.SystemSettings.ScreenSetting.ScreenSize)
 
-	igo := ui.NewInGameOverlay(game.Broker, game.RenderContext)
-
 	game.Broker.Register(controller.TopicScreenToggle, game.ToggleScreenSize)
 	game.Broker.Register(controller.TopicInputRotate, game.Player.Rotate)
 	game.Broker.Register(controller.TopicInputRotateReset, game.Player.RotateReset)
 	game.Broker.Register(controller.TopicInputMove, game.Player.Move)
 	game.Broker.Register(controller.TopicInputZoom, game.Player.Zoom)
-	game.Broker.Register(controller.TopicInputCursorMoved, igo.CheckIntersection)
+	game.Broker.Register(controller.TopicInputCursorMoved, game.Igo.CheckIntersection)
 	game.Broker.Register(ui.TopicUiHotbarInteraction, game.Player.HandleHotbarInteraction)
 
 	for !rl.WindowShouldClose() {
@@ -40,9 +38,8 @@ func main() {
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		igo.Draw(&game)
+		game.Igo.Draw(&game)
 		rl.EndTextureMode()
-
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
 		rl.DrawTexturePro(game.RenderContext.RenderTexture.Texture, source, game.RenderContext.Viewport, rl.NewVector2(0, 0), 0, rl.White)
