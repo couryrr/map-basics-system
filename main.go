@@ -13,8 +13,8 @@ func main() {
 	rl.InitWindow(int32(game.SystemSettings.ScreenSetting.ScreenSize.X), int32(game.SystemSettings.ScreenSetting.ScreenSize.Y), "Map Basics")
 	rl.SetTargetFPS(60)
 
-	game.LoadResources()
 	game.LoadWorld()
+	game.LoadResources()
 
 	defer game.Unload()
 	defer rl.CloseWindow()

@@ -43,7 +43,7 @@ func (game *Game) LoadResources() {
 	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
 	game.GameCamera = &cam
 
-	igo := ui.NewInGameOverlay(game.Broker, *game.RenderContext)
+	igo := ui.NewInGameOverlay(game.Broker, *game.RenderContext, game.World.Registry.GetItems())
 	game.Igo = &igo
 }
 

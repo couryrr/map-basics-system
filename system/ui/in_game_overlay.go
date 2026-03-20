@@ -46,16 +46,16 @@ func (igo *InGameOverlay) Draw(ctx DrawContext) {
 	igo.container.Draw(ctx)
 }
 
-func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext) InGameOverlay {
+func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, items iter.Seq2[string, world.GameItem]) InGameOverlay {
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
 		broker:    broker,
-		container: NewContainer(root, LayoutNone, WithBorder(1, rl.DarkGray)),
+		container: NewContainer(root, WithBorder(1, rl.DarkGray)),
 	}
 
 	parentBounds := igo.container.Bounds()
 	hotbar := NewHotbarElement(parentBounds)
-	registry := NewRegistryElement(parentBounds)
+	registry := NewRegistryElement(parentBounds, items)
 
 	igo.container.AddChild(registry)
 	igo.container.AddChild(hotbar)

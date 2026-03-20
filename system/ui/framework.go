@@ -28,6 +28,9 @@ type Style struct {
 	Gap         float32
 	Width       float32
 	Height      float32
+	CellHeight  float32
+	Columns     int
+	Layout      Layout
 	OffsetX     float32
 	OffsetY     float32
 	BGColor     *color.RGBA
@@ -86,6 +89,24 @@ func WithOffset(x, y float32) func(*Style) {
 func WithBGColor(c color.RGBA) func(*Style) {
 	return func(s *Style) {
 		s.BGColor = &c
+	}
+}
+
+func WithLayout(l Layout) func(*Style) {
+	return func(s *Style) {
+		s.Layout = l
+	}
+}
+
+func WithColumns(n int) func(*Style) {
+	return func(s *Style) {
+		s.Columns = n
+	}
+}
+
+func WithCellHeight(h float32) func(*Style) {
+	return func(s *Style) {
+		s.CellHeight = h
 	}
 }
 
@@ -168,7 +189,10 @@ func (c *Container) applyLayout() {
 		}
 		rows := (n + cols - 1) / cols
 		slotW := (c.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
-		slotH := (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+		slotH := c.Style.CellHeight
+		if slotH == 0 {
+			slotH = (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+		}
 		for i, child := range c.children {
 			col := i % cols
 			row := i / cols
@@ -179,13 +203,13 @@ func (c *Container) applyLayout() {
 	}
 }
 
-func NewContainer(bound rl.Rectangle, layout Layout, opts ...func(*Style)) Container {
+func NewContainer(bound rl.Rectangle, opts ...func(*Style)) Container {
 	s := DefaultStyle()
 	for _, opt := range opts {
 		opt(&s)
 	}
 
-	inset := s.Margin + s.Padding
+	inset := s.Margin
 	if s.Border != nil {
 		inset += s.Border.Thickness
 	}
@@ -205,5 +229,5 @@ func NewContainer(bound rl.Rectangle, layout Layout, opts ...func(*Style)) Conta
 		w-inset*2,
 		h-inset*2,
 	)
-	return Container{bounds: adjusted, Layout: layout, Style: s}
+	return Container{bounds: adjusted, Layout: s.Layout, Style: s, Columns: s.Columns}
 }

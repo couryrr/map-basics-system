@@ -69,9 +69,9 @@ func (e *HotbarElement) HandleIntersection(point rl.Vector2) *InteractionResult 
 
 func NewHotbarElement(bounds rl.Rectangle) *HotbarElement {
 	e := &HotbarElement{
-		container: NewContainer(bounds, LayoutHorizontal,
+		container: NewContainer(bounds, WithLayout(LayoutHorizontal),
 			WithWidth(bounds.Width-197), WithHeight(48), WithOffset(197, bounds.Height-48),
-			WithGap(2),
+			WithGap(2), WithPadding(2),
 			WithBorder(1, rl.DarkGray)),
 	}
 	for i := range 6 {
