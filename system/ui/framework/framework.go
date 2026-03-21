@@ -9,6 +9,13 @@ import (
 type Layout int
 type InputEventType int
 type ElementState int
+type TextAlign int
+
+const (
+	TextAlignLeft   TextAlign = iota
+	TextAlignCenter
+	TextAlignRight
+)
 
 const (
 	LayoutNone Layout = iota
@@ -79,6 +86,11 @@ func (b StyleBuilder) Border(thickness float32, c color.RGBA) StyleBuilder {
 	b.s.Border = &Border{Thickness: thickness, Color: c}
 	return b
 }
+func (b StyleBuilder) Font(f FontStyle) StyleBuilder { b.s.Font = &f; return b }
+
+func DefaultFont(size float32, c color.RGBA, align TextAlign) FontStyle {
+	return FontStyle{Font: rl.GetFontDefault(), Size: size, Spacing: 1, Color: c, Align: align}
+}
 
 type Border struct {
 	Thickness float32
@@ -95,6 +107,22 @@ type FontStyle struct {
 	Size    float32
 	Spacing float32
 	Color   color.RGBA
+	Align   TextAlign
+}
+
+func (fs FontStyle) Position(text string, bounds rl.Rectangle) rl.Vector2 {
+	textSize := rl.MeasureTextEx(fs.Font, text, fs.Size, fs.Spacing)
+	y := bounds.Y + (bounds.Height-textSize.Y)/2
+	var x float32
+	switch fs.Align {
+	case TextAlignCenter:
+		x = bounds.X + (bounds.Width-textSize.X)/2
+	case TextAlignRight:
+		x = bounds.X + bounds.Width - textSize.X
+	default:
+		x = bounds.X
+	}
+	return rl.NewVector2(x, y)
 }
 
 type Container struct {
@@ -134,6 +162,28 @@ func (c *Container) SetElementState(es ElementState) {
 
 func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
 func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
+
+func (c *Container) ComputeBounds(b rl.Rectangle) {
+	inset := c.Style.Margin
+	if c.Style.Border != nil {
+		inset += c.Style.Border.Thickness
+	}
+	w := b.Width
+	h := b.Height
+	if c.Style.Width != 0 {
+		w = c.Style.Width
+	}
+	if c.Style.Height != 0 {
+		h = c.Style.Height
+	}
+	c.bounds = rl.NewRectangle(
+		b.X+inset+c.Style.OffsetX,
+		b.Y+inset+c.Style.OffsetY,
+		w-inset*2,
+		h-inset*2,
+	)
+	c.applyLayout()
+}
 func (c *Container) Children() []Element      { return c.children }
 func (c *Container) AddChild(e Element) {
 	c.children = append(c.children, e)
@@ -201,33 +251,13 @@ func NewTypedContainer[T any](bound rl.Rectangle, style Style, prop T) TypedCont
 }
 
 func NewContainer(bound rl.Rectangle, style Style) Container {
-	s := style
-
-	inset := s.Margin
-	if s.Border != nil {
-		inset += s.Border.Thickness
-	}
-
-	w := bound.Width
-	h := bound.Height
-	if s.Width != 0 {
-		w = s.Width
-	}
-	if s.Height != 0 {
-		h = s.Height
-	}
-
-	adjusted := rl.NewRectangle(
-		bound.X+inset+s.OffsetX,
-		bound.Y+inset+s.OffsetY,
-		w-inset*2,
-		h-inset*2,
-	)
-	return Container{bounds: adjusted,
-		Layout:       s.Layout,
-		Style:        s,
-		Columns:      s.Columns,
+	c := Container{
+		Layout:       style.Layout,
+		Style:        style,
+		Columns:      style.Columns,
 		elementState: ElementStateNormal,
 		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
 	}
+	c.ComputeBounds(bound)
+	return c
 }

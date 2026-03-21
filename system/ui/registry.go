@@ -19,7 +19,10 @@ type RegistryItemElement struct {
 
 func (rie *RegistryItemElement) Draw() {
 	rl.DrawRectangleLinesEx(rie.Bounds(), rie.Style.Border.Thickness, rie.Style.Border.Color)
-	rl.DrawText(rie.gameItem.Name, int32(rie.Bounds().X), int32(rie.Bounds().Y), 10, rie.gameItem.Color)
+	if fs := rie.Style.Font; fs != nil {
+		pos := fs.Position(rie.gameItem.Name, rie.Bounds())
+		rl.DrawTextEx(fs.Font, rie.gameItem.Name, pos, fs.Size, fs.Spacing, rie.gameItem.Color)
+	}
 
 	//TODO: the system should handle the children draw.
 	//TODO: this draw could return a method that is used by container.
@@ -51,6 +54,7 @@ func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) Regist
 			Padding(4).
 			CellHeight(48).
 			Columns(2).
+			Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
 			Build()),
 	}
 
