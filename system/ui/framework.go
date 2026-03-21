@@ -7,13 +7,23 @@ import (
 )
 
 type Layout int
+type MouseEventType int
 
 const (
 	LayoutNone Layout = iota
 	LayoutHorizontal
 	LayoutVertical
 	LayoutGrid
+
+	MouseClickEvent MouseEventType = iota
+	MouseHoveEvent
+	MouseDragEvent
 )
+
+type MouseEvent struct {
+	Position rl.Vector2
+	Event    MouseEventType
+}
 
 type Element interface {
 	Draw(ctx DrawContext)
@@ -139,6 +149,7 @@ type Container struct {
 	Layout   Layout
 	Columns  int
 	children []Element
+	mouseEvents map[MouseEventType][]func(event MouseEvent)
 }
 
 func (c *Container) Draw(ctx DrawContext) {
@@ -148,6 +159,9 @@ func (c *Container) Draw(ctx DrawContext) {
 	}
 }
 
+func (c *Container) AddMouseEventHandler(eventType MouseEventType, cb func(event MouseEvent)) {   
+	c.mouseEvents[eventType] = append(c.mouseEvents[eventType], cb)
+}
 func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
 func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
 func (c *Container) Children() []Element      { return c.children }

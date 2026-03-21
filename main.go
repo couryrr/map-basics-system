@@ -27,7 +27,7 @@ func main() {
 	game.Broker.Register(controller.TopicInputRotateReset, game.Player.RotateReset)
 	game.Broker.Register(controller.TopicInputMove, game.Player.Move)
 	game.Broker.Register(controller.TopicInputZoom, game.Player.Zoom)
-	game.Broker.Register(controller.TopicInputCursorMoved, game.Igo.CheckIntersection)
+	game.Broker.Register(controller.TopicInputCursorMoved, game.Igo.HandleMouseEvent)
 	game.Broker.Register(ui.TopicUiHotbarInteraction, game.Player.HandleHotbarInteraction)
 
 	for !rl.WindowShouldClose() {

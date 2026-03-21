@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/system/ui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -31,7 +32,10 @@ func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 
 	delta := rl.GetMouseDelta()
 	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		broker.Send(TopicInputCursorMoved, pubsub.Message{Data: rCtx.ScreenToVirtual(rl.GetMousePosition())})
+		broker.Send(TopicInputCursorMoved, pubsub.Message{ Data: ui.MouseEvent{
+			Position: rCtx.ScreenToVirtual(rl.GetMousePosition()),
+			Event:    ui.MouseHoveEvent,
+		}})
 	}
 
 	if wheel := rl.GetMouseWheelMove(); wheel != 0 {
