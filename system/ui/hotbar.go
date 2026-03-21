@@ -25,24 +25,18 @@ type HotbarState interface {
 }
 
 type HotbarItemElement struct {
-	Container
+	*Container
 	slotId int32
 	state  HotbarState
 }
 
 func (hbie *HotbarItemElement) Draw(ctx DrawContext) {
-	//TODO: Move to hover
-	// why did I even do this it looks so awful...
-	ai := hbie.state.GetActiveSlot()
-	if ai != nil {
-		if *ai == hbie.slotId {
-			rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness+2, hbie.Style.Border.Color)
-		} else {
-			rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness, hbie.Style.Border.Color)
-		}
-	} else {
-		rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness, hbie.Style.Border.Color)
+	borderThickness := hbie.Style.Border.Thickness
+	rl.TraceLog(rl.LogInfo, "The elem state is %v", hbie.ElementState())
+	if hbie.ElementState() == ElementStateHovered {
+		borderThickness += 2
 	}
+	rl.DrawRectangleLinesEx(hbie.bounds, borderThickness, hbie.Style.Border.Color)
 	name := hbie.state.SlotItem(hbie.slotId)
 	rl.DrawText(name, int32(hbie.Bounds().X), int32(hbie.Bounds().Y), 10, rl.DarkGray)
 	for _, child := range hbie.Children() {
@@ -61,13 +55,25 @@ func (hbe *HotbarElement) Draw(ctx DrawContext) {
 	}
 }
 
-// TODO: Not a fan of state being on the struct.
+// TODO: Containers should have a prop (yes like react (I like solidjs more)).
 func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) HotbarItemElement {
-	return HotbarItemElement{
-		Container: NewContainer(bounds, WithBorder(1, rl.DarkBlue)),
+	container := NewContainer(bounds, WithBorder(1, rl.DarkBlue))
+	hbie := HotbarItemElement{
+		Container: &container,
 		slotId:    slotId,
 		state:     state,
 	}
+
+	//TODO: The container should manage the state not the caller. All the caller should do is set Styles based on the state.
+	hbie.AddEventListener(MouseHoverEvent, func(event InputEvent) {
+		if rl.CheckCollisionPointRec(event.Position, hbie.Bounds()) {
+			hbie.SetElementState(ElementStateHovered)
+		} else {
+			hbie.SetElementState(ElementStateNormal)
+		}
+	})
+
+	return hbie
 }
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) HotbarElement {

@@ -27,13 +27,13 @@ type InGameOverlay struct {
 	Container
 }
 
-func (hbie *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
-	if event, ok := messge.Data.(MouseEvent); ok {
-		for _, child := range hbie.Children() {
+func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
+	if event, ok := messge.Data.(InputEvent); ok {
+		for _, child := range igo.Children() {
 			if rl.CheckCollisionPointRec(event.Position, child.Bounds()) {
-
+				child.HandleEvents(event)
 			} else {
-				hbie.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
+				igo.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
 					Data: HotbarInteractionMessage{Action: HotbarActionLeave},
 				})
 			}
@@ -59,7 +59,7 @@ func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state 
 	hotbar := NewHotbarElement(parentBounds, state.GetHotbarState())
 	registry := NewRegistryElement(parentBounds, state.GetRegistryState())
 
-	igo.AddChild(&registry)
 	igo.AddChild(&hotbar)
+	igo.AddChild(&registry)
 	return igo
 }

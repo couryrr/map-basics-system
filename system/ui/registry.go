@@ -20,7 +20,8 @@ func (rie *RegistryItemElement) Draw(ctx DrawContext) {
 	rl.DrawRectangleLinesEx(rie.bounds, rie.Style.Border.Thickness, rie.Style.Border.Color)
 	rl.DrawText(rie.gameItem.Name, int32(rie.Bounds().X), int32(rie.Bounds().Y), 10, rie.gameItem.Color)
 
-	//TODO: the system should handle the children draw some how.
+	//TODO: the system should handle the children draw.
+	//TODO: this draw could return a method that is used by container.
 	for _, child := range rie.Children() {
 		child.Draw(ctx)
 	}
@@ -37,7 +38,7 @@ func (re *RegistryElement) Draw(ctx DrawContext) {
 	}
 }
 
-// TODO: Do not pass GameItem directly
+// TODO: Do not pass GameItem directly could be an interface
 func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) RegistryItemElement {
 	e := RegistryItemElement{
 		gameItem: &gameItem,

@@ -32,9 +32,9 @@ func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 
 	delta := rl.GetMouseDelta()
 	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		broker.Send(TopicInputCursorMoved, pubsub.Message{ Data: ui.MouseEvent{
+		broker.Send(TopicInputCursorMoved, pubsub.Message{ Data: ui.InputEvent{
 			Position: rCtx.ScreenToVirtual(rl.GetMousePosition()),
-			Event:    ui.MouseHoveEvent,
+			EventType:    ui.MouseHoverEvent,
 		}})
 	}
 

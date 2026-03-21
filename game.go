@@ -71,7 +71,7 @@ func (game *Game) LoadWorld() {
 	game.World = &w
 }
 
-// TODO: some more thinking on this idea
+// TODO: should the game match the DrawState? Is there a better way to pass this data in?
 func (game *Game) GetRenderContext() *renderer.RenderContext { return game.RenderContext }
 func (game *Game) GetHotbarState() ui.HotbarState {
 	return &game.Player.Hotbar

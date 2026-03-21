@@ -7,7 +7,8 @@ import (
 )
 
 type Layout int
-type MouseEventType int
+type InputEventType int
+type ElementState int
 
 const (
 	LayoutNone Layout = iota
@@ -15,14 +16,18 @@ const (
 	LayoutVertical
 	LayoutGrid
 
-	MouseClickEvent MouseEventType = iota
-	MouseHoveEvent
+	MouseClickEvent InputEventType = iota
+	MouseHoverEvent
 	MouseDragEvent
+
+	ElementStateNormal ElementState = iota
+	ElementStateHovered
+	ElementStateSelected
 )
 
-type MouseEvent struct {
-	Position rl.Vector2
-	Event    MouseEventType
+type InputEvent struct {
+	Position  rl.Vector2
+	EventType InputEventType
 }
 
 type Element interface {
@@ -30,6 +35,9 @@ type Element interface {
 	Bounds() rl.Rectangle
 	SetBounds(rl.Rectangle)
 	Children() []Element
+	AddEventListener(eventType InputEventType, cb func(event InputEvent))
+	HandleEvents(event InputEvent)
+	ElementState() ElementState
 }
 
 type Style struct {
@@ -144,67 +152,90 @@ type FontStyle struct {
 }
 
 type Container struct {
-	bounds   rl.Rectangle
-	Style    Style
-	Layout   Layout
-	Columns  int
-	children []Element
-	mouseEvents map[MouseEventType][]func(event MouseEvent)
+	bounds       rl.Rectangle
+	Style        Style
+	Layout       Layout
+	Columns      int
+	children     []Element
+	inputEvents  map[InputEventType][]func(event InputEvent)
+	elementState ElementState
 }
 
-func (igo *Container) AddMouseEventHandler(eventType MouseEventType, cb func(event MouseEvent)) {   
-	igo.mouseEvents[eventType] = append(igo.mouseEvents[eventType], cb)
-}
-func (igo *Container) Bounds() rl.Rectangle     { return igo.bounds }
-func (igo *Container) SetBounds(b rl.Rectangle) { igo.bounds = b; igo.applyLayout() }
-func (igo *Container) Children() []Element      { return igo.children }
-func (igo *Container) AddChild(e Element) {
-	igo.children = append(igo.children, e)
-	igo.applyLayout()
+func (c *Container) HandleEvents(event InputEvent) {
+	if c.inputEvents != nil {
+		callbacks := c.inputEvents[event.EventType]
+		for _, cb := range callbacks {
+			cb(event)
+		}
+	}
+
+	for _, child := range c.children {
+		child.HandleEvents(event)
+	}
 }
 
-func (igo *Container) applyLayout() {
-	n := len(igo.children)
-	if n == 0 || igo.Layout == LayoutNone {
+func (c *Container) AddEventListener(eventType InputEventType, cb func(event InputEvent)) {
+	c.inputEvents[eventType] = append(c.inputEvents[eventType], cb)
+}
+
+func (c *Container) ElementState() ElementState {
+	return c.elementState
+}
+
+func (c *Container) SetElementState(es ElementState) {
+	c.elementState = es
+}
+
+func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
+func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
+func (c *Container) Children() []Element      { return c.children }
+func (c *Container) AddChild(e Element) {
+	c.children = append(c.children, e)
+	c.applyLayout()
+}
+
+func (c *Container) applyLayout() {
+	n := len(c.children)
+	if n == 0 || c.Layout == LayoutNone {
 		return
 	}
 
-	p := igo.Style.Padding
-	g := igo.Style.Gap
+	p := c.Style.Padding
+	g := c.Style.Gap
 
-	switch igo.Layout {
+	switch c.Layout {
 	case LayoutHorizontal:
-		slotW := (igo.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
-		slotH := igo.bounds.Height - p*2
-		x := igo.bounds.X + p
-		for _, child := range igo.children {
-			child.SetBounds(rl.NewRectangle(x, igo.bounds.Y+p, slotW, slotH))
+		slotW := (c.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
+		slotH := c.bounds.Height - p*2
+		x := c.bounds.X + p
+		for _, child := range c.children {
+			child.SetBounds(rl.NewRectangle(x, c.bounds.Y+p, slotW, slotH))
 			x += slotW + g
 		}
 	case LayoutVertical:
-		slotW := igo.bounds.Width - p*2
-		slotH := (igo.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
-		y := igo.bounds.Y + p
-		for _, child := range igo.children {
-			child.SetBounds(rl.NewRectangle(igo.bounds.X+p, y, slotW, slotH))
+		slotW := c.bounds.Width - p*2
+		slotH := (c.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
+		y := c.bounds.Y + p
+		for _, child := range c.children {
+			child.SetBounds(rl.NewRectangle(c.bounds.X+p, y, slotW, slotH))
 			y += slotH + g
 		}
 	case LayoutGrid:
-		cols := igo.Columns
+		cols := c.Columns
 		if cols <= 0 {
 			cols = 1
 		}
 		rows := (n + cols - 1) / cols
-		slotW := (igo.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
-		slotH := igo.Style.CellHeight
+		slotW := (c.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
+		slotH := c.Style.CellHeight
 		if slotH == 0 {
-			slotH = (igo.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+			slotH = (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
 		}
-		for i, child := range igo.children {
+		for i, child := range c.children {
 			col := i % cols
 			row := i / cols
-			x := igo.bounds.X + p + float32(col)*(slotW+g)
-			y := igo.bounds.Y + p + float32(row)*(slotH+g)
+			x := c.bounds.X + p + float32(col)*(slotW+g)
+			y := c.bounds.Y + p + float32(row)*(slotH+g)
 			child.SetBounds(rl.NewRectangle(x, y, slotW, slotH))
 		}
 	}
@@ -236,5 +267,11 @@ func NewContainer(bound rl.Rectangle, opts ...func(*Style)) Container {
 		w-inset*2,
 		h-inset*2,
 	)
-	return Container{bounds: adjusted, Layout: s.Layout, Style: s, Columns: s.Columns}
+	return Container{bounds: adjusted,
+		Layout:       s.Layout,
+		Style:        s,
+		Columns:      s.Columns,
+		elementState: ElementStateNormal,
+		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
+	}
 }
