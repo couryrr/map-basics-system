@@ -2,84 +2,50 @@
 
 ---
 
-## Rendering pipeline
+## Build
 
-World space -> Camera transform -> Virtual render texture -> Screen blit
+```bash
+make windows   # cross-compile and deploy to Windows
+make linux     # local Linux build
+```
 
-- Virtual resolution: 960x540
-- Tile size: 32x32 pixels
-- `VirtualWidth`/`VirtualHeight` are constants in the `config` package
-- Blit uses `DrawTexturePro` with a letterbox rect to handle arbitrary window sizes
-
----
-
-## Coordinate transforms
-
-- Mouse: screen -> virtual (manual scale/offset) -> world (`rl.GetScreenToWorld2D`)
-- UI collision checks stop at virtual space
-- World collision checks go all the way to world space
-- `system/controller` does the screen -> virtual conversion once and publishes virtual coords
+Deploys to `/mnt/c/Users/Coury/Devlopment/map-basics.exe` (WSL path).
 
 ---
 
-## World and terrain
+## Architecture
 
-- FIXME: Terrain uses fBm (3 octave layered Perlin noise, cached as PNG) better lib needed
-- Active chunk area: 5 chunks in each direction around camera
-- The world is effectively infinite, Perlin sampling wraps via modulo
+**Rendering:** World → Camera2D → virtual render texture (960×540) → letterboxed screen blit
+
+**Events:** Callback pub/sub broker (`system/pubsub`). Topics are typed string constants owned by the publishing package. Input controller converts screen→virtual coords and publishes; subsystems subscribe.
+
+**UI framework** (`system/ui/`): Container-based element tree. `Container` holds children, a `Style` (padding, gap, border, offset, etc.), and a layout engine. Layout is applied at `AddChild` time — static, not per-frame. Supported layouts: `LayoutHorizontal`, `LayoutVertical`, `LayoutGrid`. Style is composed with `With*` functional options (`WithLayout`, `WithPadding`, `WithBorder`, etc.).
+
+**World:** Infinite terrain via 3-octave FBM Perlin noise (cached PNGs). 32×32 tile chunks, 5-chunk render radius around camera.
+
+**Item registry:** `GameItem` structs loaded from `assets/directory.json` at startup. Accessed via `RegistryState` interface.
 
 ---
 
-## Project structure
+## Package map
 
-| Package | Contents |
+| Package | Role |
 |---|---|
-| `config/` | VirtualWidth, VirtualHeight |
-| `system/camera/` | Camera modes, rotation-aware movement |
-| `system/controller/` | Raw input, screen->virtual coord conversion, topic publishing |
-| `system/pubsub/` | Broker, Message, Topic types |
-| `system/renderer/` | RenderContext, viewport/letterbox management |
-| `system/setting/` | Screen size settings |
-| `system/ui/` | InGameOverlay, HotbarElement, HotbarState, DrawContext interfaces |
-| `entity/player/` | Player, Hotbar |
-| `world/` | Terrain generation, chunk rendering |
-| `game.go` | Game struct, composition root |
+| `config/` | Virtual resolution constants |
+| `system/pubsub/` | Broker, Topic, Message |
+| `system/controller/` | Input → virtual coords → broker |
+| `system/renderer/` | RenderContext, viewport/letterbox |
+| `system/ui/` | UI framework, overlay, hotbar, registry |
+| `entity/player/` | Player state, Hotbar |
+| `world/` | Terrain, chunk rendering, item registry |
+| `game.go` | Composition root, `DrawContext` impl |
 | `main.go` | Window init, broker wiring, game loop |
 
 ---
 
-## Event bus
+## Open
 
-- Callback-based pub/sub in `system/pubsub`, single-threaded with the game loop (single-threaded atm)
-- `Topic` is a typed `string` alias, constants defined in the package that owns the event
-- `Broker.Register(topic, callback)` and `Broker.Send(topic, message)` are the full API
-- Message payload is `any`, receivers type-assert on receipt (fixme not sure about this any)
-
----
-
-## Player and hotbar
-
-- Player owns Hotbar, single source of truth for slot contents and active slot
-- `Hotbar` satisfies the `ui.HotbarState` interface (`SlotItem(i)`, `GetActiveSlot()`) used by the draw path
-- `HotbarElement` (UI) owns only the slot bounds rectangles
-- Hotbar interaction uses a typed `HotbarAction` string with defined constants (`hover`, `leave`)
-- Interaction flow: cursor moved -> `InGameOverlay.CheckIntersection` -> `TopicUiHotbarInteraction` -> `Player.HandleHotbarInteraction` dispatches on action
-
----
-
-## Input / controller
-
-- `system/controller` reads raw input, converts screen -> virtual coords, publishes to broker
-- `TopicInputCursorMoved` only fires when `rl.GetMouseDelta()` is non-zero
-- UI elements return an `InteractionResult{Topic, Message}`, `InGameOverlay` publishes if non-nil
-
----
-
-## Open decisions
-
-- Art approach: placeholder rects, free asset pack
-- Buildings and entities: not yet implemented
-- Directory/Registry (item catalog from JSON): not yet implemented
-- World save format: not yet decided
-- Layer/Z sorting for draw order: not yet implemented
-- Spatial partitioning for world-space click interaction: deferred until needed
+- Buildings and entity placement not yet implemented
+- World save format undecided
+- UI mouse interaction (hit-testing) stubbed, not wired
+- Draw order / Z-sorting deferred
