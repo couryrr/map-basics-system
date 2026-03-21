@@ -42,28 +42,30 @@ func (re *RegistryElement) Draw(ctx DrawContext) {
 func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) RegistryItemElement {
 	e := RegistryItemElement{
 		gameItem: &gameItem,
-		Container: NewContainer(bounds,
-			WithLayout(LayoutGrid),
-			WithWidth(200),
-			WithBorder(1, rl.DarkGray),
-			WithGap(2),
-			WithPadding(4),
-			WithCellHeight(48),
-			WithColumns(2)),
+		Container: NewContainer(bounds, NewStyle().
+			Layout(LayoutGrid).
+			Width(200).
+			Border(1, rl.DarkGray).
+			Gap(2).
+			Padding(4).
+			CellHeight(48).
+			Columns(2).
+			Build()),
 	}
 
 	return e
 }
 
 func NewRegistryElement(bounds rl.Rectangle, state RegistryState) RegistryElement {
-	e := RegistryElement{Container: NewContainer(bounds,
-		WithLayout(LayoutGrid),
-		WithWidth(200),
-		WithBorder(1, rl.DarkGray),
-		WithGap(2),
-		WithPadding(4),
-		WithCellHeight(48),
-		WithColumns(2)),
+	e := RegistryElement{Container: NewContainer(bounds, NewStyle().
+		Layout(LayoutGrid).
+		Width(200).
+		Border(1, rl.DarkGray).
+		Gap(2).
+		Padding(4).
+		CellHeight(48).
+		Columns(2).
+		Build()),
 	}
 
 	for _, item := range state.GetItems() {

@@ -52,7 +52,7 @@ func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state 
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
 		broker:    broker,
-		Container: NewContainer(root, WithBorder(1, rl.DarkGray)),
+		Container: NewContainer(root, NewStyle().Border(1, rl.DarkGray).Build()),
 	}
 
 	parentBounds := igo.Bounds()

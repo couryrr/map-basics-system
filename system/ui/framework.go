@@ -57,81 +57,27 @@ type Style struct {
 	Font        *FontStyle
 }
 
-func DefaultStyle() Style {
-	return Style{
-		Padding: 0,
-		Margin:  0,
-		Gap:     0,
-		Width:   0,
-		Height:  0,
-	}
+type StyleBuilder struct {
+	s Style
 }
 
-func WithPadding(p float32) func(*Style) {
-	return func(s *Style) {
-		s.Padding = p
-	}
-}
+func NewStyle() StyleBuilder { return StyleBuilder{} }
 
-func WithMargin(m float32) func(*Style) {
-	return func(s *Style) {
-		s.Margin = m
-	}
-}
+func (b StyleBuilder) Build() Style { return b.s }
 
-func WithGap(g float32) func(*Style) {
-	return func(s *Style) {
-		s.Gap = g
-	}
-}
-
-func WithWidth(w float32) func(*Style) {
-	return func(s *Style) {
-		s.Width = w
-	}
-}
-
-func WithHeight(h float32) func(*Style) {
-	return func(s *Style) {
-		s.Height = h
-	}
-}
-
-func WithOffset(x, y float32) func(*Style) {
-	return func(s *Style) {
-		s.OffsetX = x
-		s.OffsetY = y
-	}
-}
-
-func WithBGColor(c color.RGBA) func(*Style) {
-	return func(s *Style) {
-		s.BGColor = &c
-	}
-}
-
-func WithLayout(l Layout) func(*Style) {
-	return func(s *Style) {
-		s.Layout = l
-	}
-}
-
-func WithColumns(n int) func(*Style) {
-	return func(s *Style) {
-		s.Columns = n
-	}
-}
-
-func WithCellHeight(h float32) func(*Style) {
-	return func(s *Style) {
-		s.CellHeight = h
-	}
-}
-
-func WithBorder(thickness float32, c color.RGBA) func(*Style) {
-	return func(s *Style) {
-		s.Border = &Border{Thickness: thickness, Color: c}
-	}
+func (b StyleBuilder) Padding(p float32) StyleBuilder    { b.s.Padding = p; return b }
+func (b StyleBuilder) Margin(m float32) StyleBuilder     { b.s.Margin = m; return b }
+func (b StyleBuilder) Gap(g float32) StyleBuilder        { b.s.Gap = g; return b }
+func (b StyleBuilder) Width(w float32) StyleBuilder      { b.s.Width = w; return b }
+func (b StyleBuilder) Height(h float32) StyleBuilder     { b.s.Height = h; return b }
+func (b StyleBuilder) CellHeight(h float32) StyleBuilder { b.s.CellHeight = h; return b }
+func (b StyleBuilder) Columns(n int) StyleBuilder        { b.s.Columns = n; return b }
+func (b StyleBuilder) Layout(l Layout) StyleBuilder      { b.s.Layout = l; return b }
+func (b StyleBuilder) Offset(x, y float32) StyleBuilder  { b.s.OffsetX = x; b.s.OffsetY = y; return b }
+func (b StyleBuilder) BGColor(c color.RGBA) StyleBuilder { b.s.BGColor = &c; return b }
+func (b StyleBuilder) Border(thickness float32, c color.RGBA) StyleBuilder {
+	b.s.Border = &Border{Thickness: thickness, Color: c}
+	return b
 }
 
 type Border struct {
@@ -241,11 +187,8 @@ func (c *Container) applyLayout() {
 	}
 }
 
-func NewContainer(bound rl.Rectangle, opts ...func(*Style)) Container {
-	s := DefaultStyle()
-	for _, opt := range opts {
-		opt(&s)
-	}
+func NewContainer(bound rl.Rectangle, style Style) Container {
+	s := style
 
 	inset := s.Margin
 	if s.Border != nil {

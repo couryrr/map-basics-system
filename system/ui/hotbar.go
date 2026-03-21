@@ -57,7 +57,7 @@ func (hbe *HotbarElement) Draw(ctx DrawContext) {
 
 // TODO: Containers should have a prop (yes like react (I like solidjs more)).
 func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) HotbarItemElement {
-	container := NewContainer(bounds, WithBorder(1, rl.DarkBlue))
+	container := NewContainer(bounds, NewStyle().Border(1, rl.DarkBlue).Build())
 	hbie := HotbarItemElement{
 		Container: &container,
 		slotId:    slotId,
@@ -78,14 +78,15 @@ func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) 
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) HotbarElement {
 	e := HotbarElement{
-		Container: NewContainer(bounds,
-			WithLayout(LayoutHorizontal),
-			WithWidth(bounds.Width-197),
-			WithHeight(48),
-			WithOffset(197, bounds.Height-48),
-			WithGap(2),
-			WithPadding(2),
-			WithBorder(1, rl.DarkGray)),
+		Container: NewContainer(bounds, NewStyle().
+			Layout(LayoutHorizontal).
+			Width(bounds.Width-197).
+			Height(48).
+			Offset(197, bounds.Height-48).
+			Gap(2).
+			Padding(2).
+			Border(1, rl.DarkGray).
+			Build()),
 	}
 
 	for i := range 10 {
