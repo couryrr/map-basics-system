@@ -1,11 +1,13 @@
 # Makefile for Boids project
+-include .env
 
 APP_NAME := map-basics
 MAIN_FILE := .
 BUILD_DIR := bin
-WINDOWS_DEPLOY_PATH := /mnt/c/Users/Coury/Devlopment/map-basics.exe
-WINDOWS_DEPLOY_DIR  := $(dir $(WINDOWS_DEPLOY_PATH))
-ASSETS_DIR          := assets
+ASSETS_DIR := assets
+
+WINDOWS_DEPLOY_DIR  := $(WINDOWS_BASE_DEPLOY)/$(APP_NAME)
+WINDOWS_DEPLOY_PATH := $(WINDOWS_DEPLOY_DIR)/$(APP_NAME).exe
 
 # Default target
 .PHONY: all
@@ -19,6 +21,7 @@ windows:
 	CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 \
 		go build -ldflags "-s -w" -o $(BUILD_DIR)/$(APP_NAME).exe $(MAIN_FILE)
 	@echo "Copying to Windows deployment location..."
+	@mkdir -p $(WINDOWS_DEPLOY_DIR)
 	cp $(BUILD_DIR)/$(APP_NAME).exe $(WINDOWS_DEPLOY_PATH)
 	cp -r $(ASSETS_DIR) $(WINDOWS_DEPLOY_DIR)
 	@echo "✅ Windows build complete: $(WINDOWS_DEPLOY_PATH)"
@@ -36,6 +39,7 @@ build:
 .PHONY: deploy
 deploy:
 	@echo "Deploying to Windows..."
+	@mkdir -p $(WINDOWS_DEPLOY_DIR)
 	cp $(BUILD_DIR)/$(APP_NAME).exe $(WINDOWS_DEPLOY_PATH)
 	cp -r $(ASSETS_DIR) $(WINDOWS_DEPLOY_DIR)
 	@echo "✅ Deployed to: $(WINDOWS_DEPLOY_PATH)"
