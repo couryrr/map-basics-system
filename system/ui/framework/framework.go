@@ -9,6 +9,13 @@ import (
 type Layout int
 type InputEventType int
 type ElementState int
+type TextAlign int
+
+const (
+	TextAlignLeft   TextAlign = iota
+	TextAlignCenter
+	TextAlignRight
+)
 
 const (
 	LayoutNone Layout = iota
@@ -81,8 +88,8 @@ func (b StyleBuilder) Border(thickness float32, c color.RGBA) StyleBuilder {
 }
 func (b StyleBuilder) Font(f FontStyle) StyleBuilder { b.s.Font = &f; return b }
 
-func DefaultFont(size float32, c color.RGBA) FontStyle {
-	return FontStyle{Font: rl.GetFontDefault(), Size: size, Spacing: 1, Color: c}
+func DefaultFont(size float32, c color.RGBA, align TextAlign) FontStyle {
+	return FontStyle{Font: rl.GetFontDefault(), Size: size, Spacing: 1, Color: c, Align: align}
 }
 
 type Border struct {
@@ -100,6 +107,22 @@ type FontStyle struct {
 	Size    float32
 	Spacing float32
 	Color   color.RGBA
+	Align   TextAlign
+}
+
+func (fs FontStyle) Position(text string, bounds rl.Rectangle) rl.Vector2 {
+	textSize := rl.MeasureTextEx(fs.Font, text, fs.Size, fs.Spacing)
+	y := bounds.Y + (bounds.Height-textSize.Y)/2
+	var x float32
+	switch fs.Align {
+	case TextAlignCenter:
+		x = bounds.X + (bounds.Width-textSize.X)/2
+	case TextAlignRight:
+		x = bounds.X + bounds.Width - textSize.X
+	default:
+		x = bounds.X
+	}
+	return rl.NewVector2(x, y)
 }
 
 type Container struct {
