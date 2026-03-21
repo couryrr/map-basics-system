@@ -20,17 +20,31 @@ type HotbarInteractionMessage struct {
 }
 
 type HotbarState interface {
-	SlotItem(i int) string
+	SlotItem(i int32) string
 	GetActiveSlot() *int32
 }
 
 type HotbarItemElement struct {
 	Container
+	slotId int32
+	state  HotbarState
 }
 
 func (hbie *HotbarItemElement) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(hbie.Bounds(), 1, rl.DarkGray)
-
+	//TODO: Move to hover
+	// why did I even do this it looks so awful...
+	ai := hbie.state.GetActiveSlot()
+	if ai != nil {
+		if *ai == hbie.slotId {
+			rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness+2, hbie.Style.Border.Color)
+		} else {
+			rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness, hbie.Style.Border.Color)
+		}
+	} else {
+		rl.DrawRectangleLinesEx(hbie.bounds, hbie.Style.Border.Thickness, hbie.Style.Border.Color)
+	}
+	name := hbie.state.SlotItem(hbie.slotId)
+	rl.DrawText(name, int32(hbie.Bounds().X), int32(hbie.Bounds().Y), 10, rl.DarkGray)
 	for _, child := range hbie.Children() {
 		child.Draw(ctx)
 	}
@@ -47,9 +61,12 @@ func (hbe *HotbarElement) Draw(ctx DrawContext) {
 	}
 }
 
-func NewHotbarItemElement(bounds rl.Rectangle, state HotbarState) HotbarItemElement {
+// TODO: Not a fan of state being on the struct.
+func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) HotbarItemElement {
 	return HotbarItemElement{
 		Container: NewContainer(bounds, WithBorder(1, rl.DarkBlue)),
+		slotId:    slotId,
+		state:     state,
 	}
 }
 
@@ -65,8 +82,8 @@ func NewHotbarElement(bounds rl.Rectangle, state HotbarState) HotbarElement {
 			WithBorder(1, rl.DarkGray)),
 	}
 
-	for range 6 {
-		ce := NewHotbarItemElement(e.Bounds(), state)
+	for i := range 10 {
+		ce := NewHotbarItemElement(e.Bounds(), int32(i), state)
 		e.AddChild(&ce)
 	}
 

@@ -14,11 +14,11 @@ const (
 )
 
 type Hotbar struct {
-	Slots      [6]string
+	Slots      [10]string
 	ActiveSlot *int32
 }
 
-func (h *Hotbar) SlotItem(i int) string { return h.Slots[i] }
+func (h *Hotbar) SlotItem(i int32) string { return h.Slots[i] }
 func (h *Hotbar) GetActiveSlot() *int32 { return h.ActiveSlot }
 
 func (h *Hotbar) SetActive(slot *int32) {
@@ -40,18 +40,19 @@ type Player struct {
 }
 
 func NewPlayer(start rl.Vector2) Player {
-	slots := [6]string{
+	slots := [10]string{
 		"drone",
 		"stockpile",
 	}
 	slots[5] = "sieve"
+	i := int32(2)
 	return Player{
 		Position:  start,
 		Rotation:  0,
 		Speed:     400,
 		ZoomLevel: 1.0,
 		Hotbar: Hotbar{
-			ActiveSlot: nil,
+			ActiveSlot: &i,
 			Slots:      slots,
 		},
 	}

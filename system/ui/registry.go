@@ -19,6 +19,8 @@ type RegistryItemElement struct {
 func (rie *RegistryItemElement) Draw(ctx DrawContext) {
 	rl.DrawRectangleLinesEx(rie.bounds, rie.Style.Border.Thickness, rie.Style.Border.Color)
 	rl.DrawText(rie.gameItem.Name, int32(rie.Bounds().X), int32(rie.Bounds().Y), 10, rie.gameItem.Color)
+
+	//TODO: the system should handle the children draw some how.
 	for _, child := range rie.Children() {
 		child.Draw(ctx)
 	}
