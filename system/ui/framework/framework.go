@@ -187,6 +187,19 @@ func (c *Container) applyLayout() {
 	}
 }
 
+type TypedContainer[T any] struct {
+	Container
+	Props T
+}
+
+func NewTypedContainer[T any](bound rl.Rectangle, style Style, prop T) TypedContainer[T] {
+	container := NewContainer(bound, style)
+	return TypedContainer[T]{
+		Container: container,
+		Props: prop,
+	}
+}
+
 func NewContainer(bound rl.Rectangle, style Style) Container {
 	s := style
 

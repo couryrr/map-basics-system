@@ -25,10 +25,13 @@ type HotbarState interface {
 	GetActiveSlot() *int32
 }
 
-type HotbarItemElement struct {
-	*framework.Container
-	slotId int32
+type HotbarItem struct {
+	SlotId int32
 	state  HotbarState
+}
+
+type HotbarItemElement struct {
+	*framework.TypedContainer[HotbarItem]
 }
 
 func (hbie *HotbarItemElement) Draw() {
@@ -38,7 +41,7 @@ func (hbie *HotbarItemElement) Draw() {
 		borderThickness += 2
 	}
 	rl.DrawRectangleLinesEx(hbie.Bounds(), borderThickness, hbie.Style.Border.Color)
-	name := hbie.state.SlotItem(hbie.slotId)
+	name := hbie.Props.state.SlotItem(hbie.Props.SlotId)
 	rl.DrawText(name, int32(hbie.Bounds().X), int32(hbie.Bounds().Y), 10, rl.DarkGray)
 	for _, child := range hbie.Children() {
 		child.Draw()
@@ -56,13 +59,10 @@ func (hbe *HotbarElement) Draw() {
 	}
 }
 
-// TODO: Containers should have a prop (yes like react (I like solidjs more)).
-func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) HotbarItemElement {
-	container := framework.NewContainer(bounds, framework.NewStyle().Border(1, rl.DarkBlue).Build())
+func NewHotbarItemElement(bounds rl.Rectangle, prop HotbarItem) HotbarItemElement {
+	container := framework.NewTypedContainer(bounds, framework.NewStyle().Border(1, rl.DarkBlue).Build(), prop)
 	hbie := HotbarItemElement{
-		Container: &container,
-		slotId:    slotId,
-		state:     state,
+		TypedContainer: &container,
 	}
 
 	//TODO: The container should manage the state not the caller. All the caller should do is set Styles based on the state.
@@ -91,7 +91,10 @@ func NewHotbarElement(bounds rl.Rectangle, state HotbarState) HotbarElement {
 	}
 
 	for i := range 10 {
-		ce := NewHotbarItemElement(e.Bounds(), int32(i), state)
+		ce := NewHotbarItemElement(e.Bounds(), HotbarItem{
+			SlotId: int32(i),
+			state: state,
+		})
 		e.AddChild(&ce)
 	}
 
