@@ -1,4 +1,4 @@
-package ui
+package framework
 
 import (
 	"image/color"
@@ -31,7 +31,7 @@ type InputEvent struct {
 }
 
 type Element interface {
-	Draw(ctx DrawContext)
+	Draw()
 	Bounds() rl.Rectangle
 	SetBounds(rl.Rectangle)
 	Children() []Element

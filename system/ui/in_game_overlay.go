@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
+	"github.com/couryrr/map-basics-system/system/ui/framework"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -24,11 +25,11 @@ type InGameOverlayState interface {
 
 type InGameOverlay struct {
 	broker *pubsub.Broker
-	Container
+	framework.Container
 }
 
 func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
-	if event, ok := messge.Data.(InputEvent); ok {
+	if event, ok := messge.Data.(framework.InputEvent); ok {
 		for _, child := range igo.Children() {
 			if rl.CheckCollisionPointRec(event.Position, child.Bounds()) {
 				child.HandleEvents(event)
@@ -41,10 +42,10 @@ func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
 	}
 }
 
-func (igo *InGameOverlay) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(igo.bounds, igo.Style.Border.Thickness, igo.Style.Border.Color)
+func (igo *InGameOverlay) Draw() {
+	rl.DrawRectangleLinesEx(igo.Bounds(), igo.Style.Border.Thickness, igo.Style.Border.Color)
 	for _, child := range igo.Children() {
-		child.Draw(ctx)
+		child.Draw()
 	}
 }
 
@@ -52,7 +53,7 @@ func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state 
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
 		broker:    broker,
-		Container: NewContainer(root, NewStyle().Border(1, rl.DarkGray).Build()),
+		Container: framework.NewContainer(root, framework.NewStyle().Border(1, rl.DarkGray).Build()),
 	}
 
 	parentBounds := igo.Bounds()

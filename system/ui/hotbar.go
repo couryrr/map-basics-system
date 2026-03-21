@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/system/ui/framework"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -25,39 +26,39 @@ type HotbarState interface {
 }
 
 type HotbarItemElement struct {
-	*Container
+	*framework.Container
 	slotId int32
 	state  HotbarState
 }
 
-func (hbie *HotbarItemElement) Draw(ctx DrawContext) {
+func (hbie *HotbarItemElement) Draw() {
 	borderThickness := hbie.Style.Border.Thickness
 	rl.TraceLog(rl.LogInfo, "The elem state is %v", hbie.ElementState())
-	if hbie.ElementState() == ElementStateHovered {
+	if hbie.ElementState() == framework.ElementStateHovered {
 		borderThickness += 2
 	}
-	rl.DrawRectangleLinesEx(hbie.bounds, borderThickness, hbie.Style.Border.Color)
+	rl.DrawRectangleLinesEx(hbie.Bounds(), borderThickness, hbie.Style.Border.Color)
 	name := hbie.state.SlotItem(hbie.slotId)
 	rl.DrawText(name, int32(hbie.Bounds().X), int32(hbie.Bounds().Y), 10, rl.DarkGray)
 	for _, child := range hbie.Children() {
-		child.Draw(ctx)
+		child.Draw()
 	}
 }
 
 type HotbarElement struct {
-	Container
+	framework.Container
 }
 
-func (hbe *HotbarElement) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(hbe.bounds, hbe.Style.Border.Thickness, hbe.Style.Border.Color)
+func (hbe *HotbarElement) Draw() {
+	rl.DrawRectangleLinesEx(hbe.Bounds(), hbe.Style.Border.Thickness, hbe.Style.Border.Color)
 	for _, child := range hbe.Children() {
-		child.Draw(ctx)
+		child.Draw()
 	}
 }
 
 // TODO: Containers should have a prop (yes like react (I like solidjs more)).
 func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) HotbarItemElement {
-	container := NewContainer(bounds, NewStyle().Border(1, rl.DarkBlue).Build())
+	container := framework.NewContainer(bounds, framework.NewStyle().Border(1, rl.DarkBlue).Build())
 	hbie := HotbarItemElement{
 		Container: &container,
 		slotId:    slotId,
@@ -65,11 +66,11 @@ func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) 
 	}
 
 	//TODO: The container should manage the state not the caller. All the caller should do is set Styles based on the state.
-	hbie.AddEventListener(MouseHoverEvent, func(event InputEvent) {
+	hbie.AddEventListener(framework.MouseHoverEvent, func(event framework.InputEvent) {
 		if rl.CheckCollisionPointRec(event.Position, hbie.Bounds()) {
-			hbie.SetElementState(ElementStateHovered)
+			hbie.SetElementState(framework.ElementStateHovered)
 		} else {
-			hbie.SetElementState(ElementStateNormal)
+			hbie.SetElementState(framework.ElementStateNormal)
 		}
 	})
 
@@ -78,8 +79,8 @@ func NewHotbarItemElement(bounds rl.Rectangle, slotId int32, state HotbarState) 
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) HotbarElement {
 	e := HotbarElement{
-		Container: NewContainer(bounds, NewStyle().
-			Layout(LayoutHorizontal).
+		Container: framework.NewContainer(bounds, framework.NewStyle().
+			Layout(framework.LayoutHorizontal).
 			Width(bounds.Width-197).
 			Height(48).
 			Offset(197, bounds.Height-48).

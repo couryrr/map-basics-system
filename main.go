@@ -38,7 +38,7 @@ func main() {
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		game.Igo.Draw(&game)
+		game.Igo.Draw()
 		rl.EndTextureMode()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)

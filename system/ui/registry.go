@@ -3,6 +3,7 @@ package ui
 import (
 	"iter"
 
+	"github.com/couryrr/map-basics-system/system/ui/framework"
 	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -12,29 +13,29 @@ type RegistryState interface {
 }
 
 type RegistryItemElement struct {
-	Container
+	framework.Container
 	gameItem *world.GameItem
 }
 
-func (rie *RegistryItemElement) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(rie.bounds, rie.Style.Border.Thickness, rie.Style.Border.Color)
+func (rie *RegistryItemElement) Draw() {
+	rl.DrawRectangleLinesEx(rie.Bounds(), rie.Style.Border.Thickness, rie.Style.Border.Color)
 	rl.DrawText(rie.gameItem.Name, int32(rie.Bounds().X), int32(rie.Bounds().Y), 10, rie.gameItem.Color)
 
 	//TODO: the system should handle the children draw.
 	//TODO: this draw could return a method that is used by container.
 	for _, child := range rie.Children() {
-		child.Draw(ctx)
+		child.Draw()
 	}
 }
 
 type RegistryElement struct {
-	Container
+	framework.Container
 }
 
-func (re *RegistryElement) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(re.bounds, re.Style.Border.Thickness, re.Style.Border.Color)
+func (re *RegistryElement) Draw() {
+	rl.DrawRectangleLinesEx(re.Bounds(), re.Style.Border.Thickness, re.Style.Border.Color)
 	for _, child := range re.Children() {
-		child.Draw(ctx)
+		child.Draw()
 	}
 }
 
@@ -42,8 +43,8 @@ func (re *RegistryElement) Draw(ctx DrawContext) {
 func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) RegistryItemElement {
 	e := RegistryItemElement{
 		gameItem: &gameItem,
-		Container: NewContainer(bounds, NewStyle().
-			Layout(LayoutGrid).
+		Container: framework.NewContainer(bounds, framework.NewStyle().
+			Layout(framework.LayoutGrid).
 			Width(200).
 			Border(1, rl.DarkGray).
 			Gap(2).
@@ -57,8 +58,8 @@ func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) Regist
 }
 
 func NewRegistryElement(bounds rl.Rectangle, state RegistryState) RegistryElement {
-	e := RegistryElement{Container: NewContainer(bounds, NewStyle().
-		Layout(LayoutGrid).
+	e := RegistryElement{Container: framework.NewContainer(bounds, framework.NewStyle().
+		Layout(framework.LayoutGrid).
 		Width(200).
 		Border(1, rl.DarkGray).
 		Gap(2).
