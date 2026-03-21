@@ -1,19 +1,14 @@
 package ui
 
 import (
-	"iter"
-
 	"github.com/couryrr/map-basics-system/system/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
-	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type DrawContext interface {
 	GetHotbarState() HotbarState
 	GetRenderContext() *renderer.RenderContext
-	GetItemByIdFromRegistry(itemId string) (*world.GameItem, error)
-	GetRegistryItems() iter.Seq2[string, world.GameItem]
 }
 
 type InteractionResult struct {
@@ -21,18 +16,24 @@ type InteractionResult struct {
 	Message pubsub.Message
 }
 
+// TODO: Another state I am just not sure of...
+type InGameOverlayState interface {
+	GetHotbarState() HotbarState
+	GetRegistryState() RegistryState
+}
+
 type InGameOverlay struct {
 	broker *pubsub.Broker
 	Container
 }
 
-func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
+func (hbie *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
 	if event, ok := messge.Data.(MouseEvent); ok {
-		for _, child := range igo.Children() {
+		for _, child := range hbie.Children() {
 			if rl.CheckCollisionPointRec(event.Position, child.Bounds()) {
 
 			} else {
-				igo.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
+				hbie.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
 					Data: HotbarInteractionMessage{Action: HotbarActionLeave},
 				})
 			}
@@ -40,7 +41,14 @@ func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
 	}
 }
 
-func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, items iter.Seq2[string, world.GameItem]) InGameOverlay {
+func (igo *InGameOverlay) Draw(ctx DrawContext) {
+	rl.DrawRectangleLinesEx(igo.bounds, igo.Style.Border.Thickness, igo.Style.Border.Color)
+	for _, child := range igo.Children() {
+		child.Draw(ctx)
+	}
+}
+
+func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state InGameOverlayState) InGameOverlay {
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
 		broker:    broker,
@@ -48,8 +56,8 @@ func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, items 
 	}
 
 	parentBounds := igo.Bounds()
-	hotbar := NewHotbarElement(parentBounds)
-	registry := NewRegistryElement(parentBounds, items)
+	hotbar := NewHotbarElement(parentBounds, state.GetHotbarState())
+	registry := NewRegistryElement(parentBounds, state.GetRegistryState())
 
 	igo.AddChild(&registry)
 	igo.AddChild(&hotbar)

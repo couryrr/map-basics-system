@@ -152,66 +152,59 @@ type Container struct {
 	mouseEvents map[MouseEventType][]func(event MouseEvent)
 }
 
-func (c *Container) Draw(ctx DrawContext) {
-	rl.DrawRectangleLinesEx(c.bounds, c.Style.Border.Thickness, c.Style.Border.Color)
-	for _, child := range c.Children() {
-		child.Draw(ctx)
-	}
+func (igo *Container) AddMouseEventHandler(eventType MouseEventType, cb func(event MouseEvent)) {   
+	igo.mouseEvents[eventType] = append(igo.mouseEvents[eventType], cb)
+}
+func (igo *Container) Bounds() rl.Rectangle     { return igo.bounds }
+func (igo *Container) SetBounds(b rl.Rectangle) { igo.bounds = b; igo.applyLayout() }
+func (igo *Container) Children() []Element      { return igo.children }
+func (igo *Container) AddChild(e Element) {
+	igo.children = append(igo.children, e)
+	igo.applyLayout()
 }
 
-func (c *Container) AddMouseEventHandler(eventType MouseEventType, cb func(event MouseEvent)) {   
-	c.mouseEvents[eventType] = append(c.mouseEvents[eventType], cb)
-}
-func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
-func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
-func (c *Container) Children() []Element      { return c.children }
-func (c *Container) AddChild(e Element) {
-	c.children = append(c.children, e)
-	c.applyLayout()
-}
-
-func (c *Container) applyLayout() {
-	n := len(c.children)
-	if n == 0 || c.Layout == LayoutNone {
+func (igo *Container) applyLayout() {
+	n := len(igo.children)
+	if n == 0 || igo.Layout == LayoutNone {
 		return
 	}
 
-	p := c.Style.Padding
-	g := c.Style.Gap
+	p := igo.Style.Padding
+	g := igo.Style.Gap
 
-	switch c.Layout {
+	switch igo.Layout {
 	case LayoutHorizontal:
-		slotW := (c.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
-		slotH := c.bounds.Height - p*2
-		x := c.bounds.X + p
-		for _, child := range c.children {
-			child.SetBounds(rl.NewRectangle(x, c.bounds.Y+p, slotW, slotH))
+		slotW := (igo.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
+		slotH := igo.bounds.Height - p*2
+		x := igo.bounds.X + p
+		for _, child := range igo.children {
+			child.SetBounds(rl.NewRectangle(x, igo.bounds.Y+p, slotW, slotH))
 			x += slotW + g
 		}
 	case LayoutVertical:
-		slotW := c.bounds.Width - p*2
-		slotH := (c.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
-		y := c.bounds.Y + p
-		for _, child := range c.children {
-			child.SetBounds(rl.NewRectangle(c.bounds.X+p, y, slotW, slotH))
+		slotW := igo.bounds.Width - p*2
+		slotH := (igo.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
+		y := igo.bounds.Y + p
+		for _, child := range igo.children {
+			child.SetBounds(rl.NewRectangle(igo.bounds.X+p, y, slotW, slotH))
 			y += slotH + g
 		}
 	case LayoutGrid:
-		cols := c.Columns
+		cols := igo.Columns
 		if cols <= 0 {
 			cols = 1
 		}
 		rows := (n + cols - 1) / cols
-		slotW := (c.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
-		slotH := c.Style.CellHeight
+		slotW := (igo.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
+		slotH := igo.Style.CellHeight
 		if slotH == 0 {
-			slotH = (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+			slotH = (igo.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
 		}
-		for i, child := range c.children {
+		for i, child := range igo.children {
 			col := i % cols
 			row := i / cols
-			x := c.bounds.X + p + float32(col)*(slotW+g)
-			y := c.bounds.Y + p + float32(row)*(slotH+g)
+			x := igo.bounds.X + p + float32(col)*(slotW+g)
+			y := igo.bounds.Y + p + float32(row)*(slotH+g)
 			child.SetBounds(rl.NewRectangle(x, y, slotW, slotH))
 		}
 	}

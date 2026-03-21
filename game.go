@@ -1,8 +1,6 @@
 package main
 
 import (
-	"iter"
-
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/system/camera"
@@ -43,7 +41,7 @@ func (game *Game) LoadResources() {
 	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
 	game.GameCamera = &cam
 
-	igo := ui.NewInGameOverlay(game.Broker, *game.RenderContext, game.World.Registry.GetItems())
+	igo := ui.NewInGameOverlay(game.Broker, *game.RenderContext, game)
 	game.Igo = &igo
 }
 
@@ -74,13 +72,13 @@ func (game *Game) LoadWorld() {
 }
 
 // TODO: some more thinking on this idea
-func (game *Game) GetHotbarState() ui.HotbarState            { return &game.Player.Hotbar }
 func (game *Game) GetRenderContext() *renderer.RenderContext { return game.RenderContext }
-func (game *Game) GetItemByIdFromRegistry(itemId string) (*world.GameItem, error) {
-	return game.World.Registry.GetItemById(itemId)
+func (game *Game) GetHotbarState() ui.HotbarState {
+	return &game.Player.Hotbar
 }
-func (game *Game) GetRegistryItems() iter.Seq2[string, world.GameItem] {
-	return game.World.Registry.GetItems()
+
+func (game *Game) GetRegistryState() ui.RegistryState {
+	return game.World.Registry
 }
 
 func (game *Game) Unload() {
