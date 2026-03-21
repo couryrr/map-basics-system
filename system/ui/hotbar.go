@@ -42,7 +42,12 @@ func (hbie *HotbarItemElement) Draw() {
 	}
 	rl.DrawRectangleLinesEx(hbie.Bounds(), borderThickness, hbie.Style.Border.Color)
 	name := hbie.Props.state.SlotItem(hbie.Props.SlotId)
-	rl.DrawText(name, int32(hbie.Bounds().X), int32(hbie.Bounds().Y), 10, rl.DarkGray)
+	if fs := hbie.Style.Font; fs != nil {
+		textSize := rl.MeasureTextEx(fs.Font, name, fs.Size, fs.Spacing)
+		x := hbie.Bounds().X + (hbie.Bounds().Width-textSize.X)/2
+		y := hbie.Bounds().Y + (hbie.Bounds().Height-textSize.Y)/2
+		rl.DrawTextEx(fs.Font, name, rl.NewVector2(x, y), fs.Size, fs.Spacing, fs.Color)
+	}
 	for _, child := range hbie.Children() {
 		child.Draw()
 	}
@@ -60,7 +65,7 @@ func (hbe *HotbarElement) Draw() {
 }
 
 func NewHotbarItemElement(bounds rl.Rectangle, prop HotbarItem) HotbarItemElement {
-	container := framework.NewTypedContainer(bounds, framework.NewStyle().Border(1, rl.DarkBlue).Build(), prop)
+	container := framework.NewTypedContainer(bounds, framework.NewStyle().Border(1, rl.DarkBlue).Font(framework.DefaultFont(10, rl.DarkGray)).Build(), prop)
 	hbie := HotbarItemElement{
 		TypedContainer: &container,
 	}
