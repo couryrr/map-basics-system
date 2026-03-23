@@ -25,7 +25,7 @@ type InGameOverlayState interface {
 
 type InGameOverlay struct {
 	broker *pubsub.Broker
-	framework.Container
+	framework.Element
 }
 
 func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
@@ -42,23 +42,15 @@ func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
 	}
 }
 
-func (igo *InGameOverlay) Draw() {
-	rl.DrawRectangleLinesEx(igo.Bounds(), igo.Style.Border.Thickness, igo.Style.Border.Color)
-	for _, child := range igo.Children() {
-		child.Draw()
-	}
-}
-
 func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state InGameOverlayState) InGameOverlay {
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
 		broker:    broker,
-		Container: framework.NewContainer(root, framework.NewStyle().Border(1, rl.DarkGray).Build()),
+		Element: framework.NewElement(root, framework.NewStyle().Border(1, rl.DarkGray).Build(), ""),
 	}
 
-	parentBounds := igo.Bounds()
-	hotbar := NewHotbarElement(parentBounds, state.GetHotbarState())
-	registry := NewRegistryElement(parentBounds, state.GetRegistryState())
+	hotbar := NewHotbarElement(igo.Bounds(), state.GetHotbarState())
+	registry := NewRegistryElement(igo.Bounds(), state.GetRegistryState())
 
 	igo.AddChild(&hotbar)
 	igo.AddChild(&registry)

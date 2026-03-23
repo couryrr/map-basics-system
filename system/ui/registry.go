@@ -12,57 +12,9 @@ type RegistryState interface {
 	GetItems() iter.Seq2[string, world.GameItem]
 }
 
-type RegistryItemElement struct {
-	framework.Container
-	gameItem *world.GameItem
-}
-
-func (rie *RegistryItemElement) Draw() {
-	rl.DrawRectangleLinesEx(rie.Bounds(), rie.Style.Border.Thickness, rie.Style.Border.Color)
-	if fs := rie.Style.Font; fs != nil {
-		pos := fs.Position(rie.gameItem.Name, rie.Bounds())
-		rl.DrawTextEx(fs.Font, rie.gameItem.Name, pos, fs.Size, fs.Spacing, rie.gameItem.Color)
-	}
-
-	//TODO: the system should handle the children draw.
-	//TODO: this draw could return a method that is used by container.
-	for _, child := range rie.Children() {
-		child.Draw()
-	}
-}
-
-type RegistryElement struct {
-	framework.Container
-}
-
-func (re *RegistryElement) Draw() {
-	rl.DrawRectangleLinesEx(re.Bounds(), re.Style.Border.Thickness, re.Style.Border.Color)
-	for _, child := range re.Children() {
-		child.Draw()
-	}
-}
-
 // TODO: Do not pass GameItem directly could be an interface
-func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) RegistryItemElement {
-	e := RegistryItemElement{
-		gameItem: &gameItem,
-		Container: framework.NewContainer(bounds, framework.NewStyle().
-			Layout(framework.LayoutGrid).
-			Width(200).
-			Border(1, rl.DarkGray).
-			Gap(2).
-			Padding(4).
-			CellHeight(48).
-			Columns(2).
-			Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
-			Build()),
-	}
-
-	return e
-}
-
-func NewRegistryElement(bounds rl.Rectangle, state RegistryState) RegistryElement {
-	e := RegistryElement{Container: framework.NewContainer(bounds, framework.NewStyle().
+func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) framework.TypedElement[world.GameItem] {
+	element := framework.NewTypedElement(bounds, framework.NewStyle().
 		Layout(framework.LayoutGrid).
 		Width(200).
 		Border(1, rl.DarkGray).
@@ -70,13 +22,27 @@ func NewRegistryElement(bounds rl.Rectangle, state RegistryState) RegistryElemen
 		Padding(4).
 		CellHeight(48).
 		Columns(2).
-		Build()),
-	}
+		Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+		Build(), gameItem.Name, gameItem)
+
+	return element
+}
+
+func NewRegistryElement(bounds rl.Rectangle, state RegistryState) framework.Element {
+	element := framework.NewElement(bounds, framework.NewStyle().
+		Layout(framework.LayoutGrid).
+		Width(200).
+		Border(1, rl.DarkGray).
+		Gap(2).
+		Padding(4).
+		CellHeight(48).
+		Columns(2).
+		Build(), "")
 
 	for _, item := range state.GetItems() {
 		c := NewRegistryItemElement(bounds, item)
-		e.AddChild(&c)
+		element.AddChild(&c)
 	}
 
-	return e
+	return element
 }

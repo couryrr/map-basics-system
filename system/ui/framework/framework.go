@@ -7,15 +7,9 @@ import (
 )
 
 type Layout int
+type TextAlign int
 type InputEventType int
 type ElementState int
-type TextAlign int
-
-const (
-	TextAlignLeft   TextAlign = iota
-	TextAlignCenter
-	TextAlignRight
-)
 
 const (
 	LayoutNone Layout = iota
@@ -23,13 +17,18 @@ const (
 	LayoutVertical
 	LayoutGrid
 
+	TextAlignLeft TextAlign = iota
+	TextAlignCenter
+	TextAlignRight
+
 	MouseClickEvent InputEventType = iota
 	MouseHoverEvent
 	MouseDragEvent
 
-	ElementStateNormal ElementState = iota
+	ElementStateNone ElementState = iota
 	ElementStateHovered
-	ElementStateSelected
+	ElementStateActive
+	ElementStateFocused
 )
 
 type InputEvent struct {
@@ -37,35 +36,73 @@ type InputEvent struct {
 	EventType InputEventType
 }
 
-type Element interface {
+type Drawable interface {
 	Draw()
 	Bounds() rl.Rectangle
 	SetBounds(rl.Rectangle)
-	Children() []Element
+	Children() []Drawable
 	AddEventListener(eventType InputEventType, cb func(event InputEvent))
 	HandleEvents(event InputEvent)
 	ElementState() ElementState
 }
 
 type Style struct {
-	Padding     float32
-	Margin      float32
-	Gap         float32
-	Width       float32
-	Height      float32
-	CellHeight  float32
-	Columns     int
-	Layout      Layout
-	OffsetX     float32
-	OffsetY     float32
-	BGColor     *color.RGBA
-	Border      *Border
-	BorderImage *BorderImage
-	Font        *FontStyle
+	Padding      float32
+	Margin       float32
+	Gap          float32
+	Width        float32
+	Height       float32
+	CellHeight   float32
+	Columns      int
+	Layout       Layout
+	OffsetX      float32
+	OffsetY      float32
+	BGColor      *color.RGBA
+	Border       *Border
+	BorderImage  *BorderImage
+	Font         *FontStyle
+	StyleVariant map[ElementState]Style
+}
+
+type Border struct {
+	Thickness float32
+	Color     color.RGBA
+}
+
+type BorderImage struct {
+	Texture rl.Texture2D
+	Tint    color.RGBA
+}
+
+type FontStyle struct {
+	Font    rl.Font
+	Size    float32
+	Spacing float32
+	Color   color.RGBA
+	Align   TextAlign
 }
 
 type StyleBuilder struct {
 	s Style
+}
+
+func DefaultFont(size float32, c color.RGBA, align TextAlign) FontStyle {
+	return FontStyle{Font: rl.GetFontDefault(), Size: size, Spacing: 1, Color: c, Align: align}
+}
+
+func (fs FontStyle) Position(text string, bounds rl.Rectangle) rl.Vector2 {
+	textSize := rl.MeasureTextEx(fs.Font, text, fs.Size, fs.Spacing)
+	y := bounds.Y + (bounds.Height-textSize.Y)/2
+	var x float32
+	switch fs.Align {
+	case TextAlignCenter:
+		x = bounds.X + (bounds.Width-textSize.X)/2
+	case TextAlignRight:
+		x = bounds.X + bounds.Width - textSize.X
+	default:
+		x = bounds.X
+	}
+	return rl.NewVector2(x, y)
 }
 
 func NewStyle() StyleBuilder { return StyleBuilder{} }
@@ -88,174 +125,147 @@ func (b StyleBuilder) Border(thickness float32, c color.RGBA) StyleBuilder {
 }
 func (b StyleBuilder) Font(f FontStyle) StyleBuilder { b.s.Font = &f; return b }
 
-func DefaultFont(size float32, c color.RGBA, align TextAlign) FontStyle {
-	return FontStyle{Font: rl.GetFontDefault(), Size: size, Spacing: 1, Color: c, Align: align}
-}
-
-type Border struct {
-	Thickness float32
-	Color     color.RGBA
-}
-
-type BorderImage struct {
-	Texture rl.Texture2D
-	Tint    color.RGBA
-}
-
-type FontStyle struct {
-	Font    rl.Font
-	Size    float32
-	Spacing float32
-	Color   color.RGBA
-	Align   TextAlign
-}
-
-func (fs FontStyle) Position(text string, bounds rl.Rectangle) rl.Vector2 {
-	textSize := rl.MeasureTextEx(fs.Font, text, fs.Size, fs.Spacing)
-	y := bounds.Y + (bounds.Height-textSize.Y)/2
-	var x float32
-	switch fs.Align {
-	case TextAlignCenter:
-		x = bounds.X + (bounds.Width-textSize.X)/2
-	case TextAlignRight:
-		x = bounds.X + bounds.Width - textSize.X
-	default:
-		x = bounds.X
-	}
-	return rl.NewVector2(x, y)
-}
-
-type Container struct {
+type Element struct {
 	bounds       rl.Rectangle
-	Style        Style
-	Layout       Layout
-	Columns      int
-	children     []Element
+	style        Style
+	text         string
+	children     []Drawable
 	inputEvents  map[InputEventType][]func(event InputEvent)
 	elementState ElementState
 }
 
-func (c *Container) HandleEvents(event InputEvent) {
-	if c.inputEvents != nil {
-		callbacks := c.inputEvents[event.EventType]
+func (elm *Element) HandleEvents(event InputEvent) {
+	if elm.inputEvents != nil {
+		callbacks := elm.inputEvents[event.EventType]
 		for _, cb := range callbacks {
 			cb(event)
 		}
 	}
 
-	for _, child := range c.children {
+	for _, child := range elm.children {
 		child.HandleEvents(event)
 	}
 }
 
-func (c *Container) AddEventListener(eventType InputEventType, cb func(event InputEvent)) {
-	c.inputEvents[eventType] = append(c.inputEvents[eventType], cb)
+func (elm *Element) AddEventListener(eventType InputEventType, cb func(event InputEvent)) {
+	elm.inputEvents[eventType] = append(elm.inputEvents[eventType], cb)
 }
 
-func (c *Container) ElementState() ElementState {
-	return c.elementState
+func (elm *Element) ElementState() ElementState {
+	return elm.elementState
 }
 
-func (c *Container) SetElementState(es ElementState) {
-	c.elementState = es
+func (elm *Element) SetElementState(es ElementState) {
+	elm.elementState = es
 }
 
-func (c *Container) Bounds() rl.Rectangle     { return c.bounds }
-func (c *Container) SetBounds(b rl.Rectangle) { c.bounds = b; c.applyLayout() }
-
-func (c *Container) ComputeBounds(b rl.Rectangle) {
-	inset := c.Style.Margin
-	if c.Style.Border != nil {
-		inset += c.Style.Border.Thickness
+func (elm *Element) Bounds() rl.Rectangle     { return elm.bounds }
+func (elm *Element) SetBounds(b rl.Rectangle) { elm.bounds = b; elm.applyLayout() }
+func (elm *Element) ComputeBounds(b rl.Rectangle) {
+	inset := elm.style.Margin
+	if elm.style.Border != nil {
+		inset += elm.style.Border.Thickness
 	}
 	w := b.Width
 	h := b.Height
-	if c.Style.Width != 0 {
-		w = c.Style.Width
+	if elm.style.Width != 0 {
+		w = elm.style.Width
 	}
-	if c.Style.Height != 0 {
-		h = c.Style.Height
+	if elm.style.Height != 0 {
+		h = elm.style.Height
 	}
-	c.bounds = rl.NewRectangle(
-		b.X+inset+c.Style.OffsetX,
-		b.Y+inset+c.Style.OffsetY,
+	elm.bounds = rl.NewRectangle(
+		b.X+inset+elm.style.OffsetX,
+		b.Y+inset+elm.style.OffsetY,
 		w-inset*2,
 		h-inset*2,
 	)
-	c.applyLayout()
-}
-func (c *Container) Children() []Element      { return c.children }
-func (c *Container) AddChild(e Element) {
-	c.children = append(c.children, e)
-	c.applyLayout()
+	elm.applyLayout()
 }
 
-func (c *Container) applyLayout() {
-	n := len(c.children)
-	if n == 0 || c.Layout == LayoutNone {
+func (elm *Element) Children() []Drawable { return elm.children }
+func (elm *Element) AddChild(e Drawable) {
+	elm.children = append(elm.children, e)
+	elm.applyLayout()
+}
+
+func (elm *Element) Draw() {
+	// Apply any state variant style
+	rl.DrawRectangleLinesEx(elm.Bounds(), elm.style.Border.Thickness, elm.style.Border.Color)
+	if fs := elm.style.Font; fs != nil && elm.text != "" {
+		pos := fs.Position(elm.text, elm.bounds)
+		rl.DrawTextEx(fs.Font, elm.text, pos, fs.Size, fs.Spacing, fs.Color)
+	}
+	for _, child := range elm.Children() {
+		child.Draw()
+	}
+}
+
+func (elm *Element) applyLayout() {
+	n := len(elm.children)
+	if n == 0 || elm.style.Layout == LayoutNone {
 		return
 	}
 
-	p := c.Style.Padding
-	g := c.Style.Gap
+	p := elm.style.Padding
+	g := elm.style.Gap
 
-	switch c.Layout {
+	switch elm.style.Layout {
 	case LayoutHorizontal:
-		slotW := (c.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
-		slotH := c.bounds.Height - p*2
-		x := c.bounds.X + p
-		for _, child := range c.children {
-			child.SetBounds(rl.NewRectangle(x, c.bounds.Y+p, slotW, slotH))
+		slotW := (elm.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
+		slotH := elm.bounds.Height - p*2
+		x := elm.bounds.X + p
+		for _, child := range elm.children {
+			child.SetBounds(rl.NewRectangle(x, elm.bounds.Y+p, slotW, slotH))
 			x += slotW + g
 		}
 	case LayoutVertical:
-		slotW := c.bounds.Width - p*2
-		slotH := (c.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
-		y := c.bounds.Y + p
-		for _, child := range c.children {
-			child.SetBounds(rl.NewRectangle(c.bounds.X+p, y, slotW, slotH))
+		slotW := elm.bounds.Width - p*2
+		slotH := (elm.bounds.Height - p*2 - g*float32(n-1)) / float32(n)
+		y := elm.bounds.Y + p
+		for _, child := range elm.children {
+			child.SetBounds(rl.NewRectangle(elm.bounds.X+p, y, slotW, slotH))
 			y += slotH + g
 		}
 	case LayoutGrid:
-		cols := c.Columns
+		cols := elm.style.Columns
 		if cols <= 0 {
 			cols = 1
 		}
 		rows := (n + cols - 1) / cols
-		slotW := (c.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
-		slotH := c.Style.CellHeight
+		slotW := (elm.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
+		slotH := elm.style.CellHeight
 		if slotH == 0 {
-			slotH = (c.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
+			slotH = (elm.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
 		}
-		for i, child := range c.children {
+		for i, child := range elm.children {
 			col := i % cols
 			row := i / cols
-			x := c.bounds.X + p + float32(col)*(slotW+g)
-			y := c.bounds.Y + p + float32(row)*(slotH+g)
+			x := elm.bounds.X + p + float32(col)*(slotW+g)
+			y := elm.bounds.Y + p + float32(row)*(slotH+g)
 			child.SetBounds(rl.NewRectangle(x, y, slotW, slotH))
 		}
 	}
 }
 
-type TypedContainer[T any] struct {
-	Container
+type TypedElement[T any] struct {
+	Element
 	Props T
 }
 
-func NewTypedContainer[T any](bound rl.Rectangle, style Style, prop T) TypedContainer[T] {
-	container := NewContainer(bound, style)
-	return TypedContainer[T]{
-		Container: container,
-		Props: prop,
+func NewTypedElement[T any](bound rl.Rectangle, style Style, text string, prop T) TypedElement[T] {
+	container := NewElement(bound, style, text)
+	return TypedElement[T]{
+		Element: container,
+		Props:   prop,
 	}
 }
 
-func NewContainer(bound rl.Rectangle, style Style) Container {
-	c := Container{
-		Layout:       style.Layout,
-		Style:        style,
-		Columns:      style.Columns,
-		elementState: ElementStateNormal,
+func NewElement(bound rl.Rectangle, style Style, text string) Element {
+	c := Element{
+		style:        style,
+		text:         text,
+		elementState: ElementStateNone,
 		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
 	}
 	c.ComputeBounds(bound)
