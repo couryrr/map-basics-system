@@ -2,8 +2,8 @@ package ui
 
 import (
 	"github.com/couryrr/map-basics-system/framework/pubsub"
-	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/framework/ui"
+	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -45,7 +45,7 @@ func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
 func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state InGameOverlayState) InGameOverlay {
 	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
 	igo := InGameOverlay{
-		broker:    broker,
+		broker:  broker,
 		Element: framework.NewElement(root, framework.NewStyle().Border(1, rl.DarkGray).Build(), ""),
 	}
 

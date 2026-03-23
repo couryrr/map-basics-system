@@ -19,7 +19,7 @@ type Hotbar struct {
 }
 
 func (h *Hotbar) SlotItem(i int32) string { return h.Slots[i] }
-func (h *Hotbar) GetActiveSlot() *int32 { return h.ActiveSlot }
+func (h *Hotbar) GetActiveSlot() *int32   { return h.ActiveSlot }
 
 func (h *Hotbar) SetActive(slot *int32) {
 	h.ActiveSlot = slot

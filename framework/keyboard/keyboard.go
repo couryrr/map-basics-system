@@ -2,8 +2,8 @@ package keyboard
 
 import (
 	"github.com/couryrr/map-basics-system/framework/pubsub"
-	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/framework/ui"
+	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -32,9 +32,9 @@ func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 
 	delta := rl.GetMouseDelta()
 	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		broker.Send(TopicInputCursorMoved, pubsub.Message{ Data: framework.InputEvent{
-			Position: rCtx.ScreenToVirtual(rl.GetMousePosition()),
-			EventType:    framework.MouseHoverEvent,
+		broker.Send(TopicInputCursorMoved, pubsub.Message{Data: framework.InputEvent{
+			Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
+			EventType: framework.MouseHoverEvent,
 		}})
 	}
 
