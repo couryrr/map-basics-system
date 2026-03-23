@@ -3,7 +3,7 @@ package ui
 import (
 	"iter"
 
-	"github.com/couryrr/map-basics-system/system/ui/framework"
+	"github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/world"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )

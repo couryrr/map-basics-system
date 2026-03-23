@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/couryrr/map-basics-system/system/pubsub"
-	"github.com/couryrr/map-basics-system/system/ui/framework"
+	"github.com/couryrr/map-basics-system/framework/pubsub"
+	"github.com/couryrr/map-basics-system/framework/ui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 

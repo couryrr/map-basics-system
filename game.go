@@ -4,7 +4,7 @@ import (
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/system/camera"
-	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/framework/pubsub"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/system/setting"
 	"github.com/couryrr/map-basics-system/system/ui"

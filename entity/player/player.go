@@ -1,7 +1,7 @@
 package player
 
 import (
-	"github.com/couryrr/map-basics-system/system/pubsub"
+	"github.com/couryrr/map-basics-system/framework/pubsub"
 	"github.com/couryrr/map-basics-system/system/ui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
