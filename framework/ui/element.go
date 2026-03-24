@@ -13,15 +13,35 @@ type Element struct {
 	elementState ElementState
 }
 
-func NewElement(bound rl.Rectangle, style Style, text string) Element {
-	c := Element{
-		style:        style,
-		text:         text,
+func NewRoot(rootBound rl.Rectangle) Element {
+	elm := Element{
+		style:        Style{},
+		bounds:       rootBound,
+		text:         "",
 		elementState: ElementStateNone,
 		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
 	}
-	c.ComputeBounds(bound)
-	return c
+	return elm
+
+}
+
+// TODO: how to manage this parentBound better?
+func NewElement() Element {
+	elm := Element{
+		style:        DefaultStyle(),
+		text:         "",
+		elementState: ElementStateNone,
+		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
+	}
+	return elm
+}
+
+func (elm *Element) WithStyle(style Style) {
+	elm.style = style
+}
+
+func (elm *Element) WithText(text string) {
+	elm.text = text
 }
 
 func (elm *Element) HandleEvents(event InputEvent) {
@@ -51,6 +71,7 @@ func (elm *Element) SetElementState(es ElementState) {
 
 func (elm *Element) Bounds() rl.Rectangle     { return elm.bounds }
 func (elm *Element) SetBounds(b rl.Rectangle) { elm.bounds = b; elm.applyLayout() }
+
 func (elm *Element) ComputeBounds(b rl.Rectangle) {
 	inset := elm.style.Margin
 	if elm.style.Border != nil {
@@ -75,6 +96,7 @@ func (elm *Element) ComputeBounds(b rl.Rectangle) {
 
 func (elm *Element) Children() []Drawable { return elm.children }
 func (elm *Element) AddChild(e Drawable) {
+	e.ComputeBounds(elm.Bounds())
 	elm.children = append(elm.children, e)
 	elm.applyLayout()
 }
@@ -137,13 +159,18 @@ func (elm *Element) applyLayout() {
 	}
 }
 
+type StyleFn func() Style
 type TypedElement[T any] struct {
 	Element
-	Props T
+	Props   *T
+	styleFn *StyleFn //Current thought is only change style not the container
 }
 
-func NewTypedElement[T any](bound rl.Rectangle, style Style, text string, prop T) TypedElement[T] {
-	container := NewElement(bound, style, text)
+func (telm *TypedElement[T]) WithStyleFn(styleFn *StyleFn) {
+	telm.styleFn = styleFn
+}
+func NewTypedElement[T any](bound rl.Rectangle, prop *T) TypedElement[T] {
+	container := NewElement()
 	return TypedElement[T]{
 		Element: container,
 		Props:   prop,

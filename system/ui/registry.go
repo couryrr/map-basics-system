@@ -13,8 +13,9 @@ type RegistryState interface {
 }
 
 // TODO: Do not pass GameItem directly could be an interface
-func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) framework.TypedElement[world.GameItem] {
-	element := framework.NewTypedElement(bounds, framework.NewStyle().
+func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) framework.TypedElement[world.GameItem] {
+	element := framework.NewTypedElement(bounds, gameItem)
+	element.WithStyle(framework.NewStyle().
 		Layout(framework.LayoutGrid).
 		Width(200).
 		Border(1, rl.DarkGray).
@@ -23,13 +24,14 @@ func NewRegistryItemElement(bounds rl.Rectangle, gameItem world.GameItem) framew
 		CellHeight(48).
 		Columns(2).
 		Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
-		Build(), gameItem.Name, gameItem)
-
+		Build())
+	element.WithText(gameItem.Name)
 	return element
 }
 
 func NewRegistryElement(bounds rl.Rectangle, state RegistryState) framework.Element {
-	element := framework.NewElement(bounds, framework.NewStyle().
+	element := framework.NewElement()
+	element.WithStyle(framework.NewStyle().
 		Layout(framework.LayoutGrid).
 		Width(200).
 		Border(1, rl.DarkGray).
@@ -37,10 +39,10 @@ func NewRegistryElement(bounds rl.Rectangle, state RegistryState) framework.Elem
 		Padding(4).
 		CellHeight(48).
 		Columns(2).
-		Build(), "")
+		Build())
 
 	for _, item := range state.GetItems() {
-		c := NewRegistryItemElement(bounds, item)
+		c := NewRegistryItemElement(bounds, &item)
 		element.AddChild(&c)
 	}
 

@@ -43,6 +43,7 @@ type InputEvent struct {
 type Drawable interface {
 	Draw()
 	Bounds() rl.Rectangle
+	ComputeBounds(rl.Rectangle)
 	SetBounds(rl.Rectangle)
 	Children() []Drawable
 	AddEventListener(eventType InputEventType, cb func(event InputEvent))

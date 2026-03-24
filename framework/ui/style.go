@@ -61,6 +61,15 @@ type Style struct {
 	StyleVariant map[ElementState]Style
 }
 
+func DefaultStyle() Style {
+	return Style{
+		Padding: 1,
+		Margin:  1,
+		Width:   1,
+		Height:  1,
+	}
+}
+
 type StyleBuilder struct {
 	s Style
 }
