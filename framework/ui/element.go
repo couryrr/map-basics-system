@@ -4,10 +4,13 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+type StyleFn func() Style
+type TextFn func() string
+
 type Element struct {
 	bounds       rl.Rectangle
-	style        Style
-	text         string
+	styleFn      StyleFn //Current thought is only change style not the container
+	textFn       TextFn  // Same idea for the text?
 	children     []Drawable
 	inputEvents  map[InputEventType][]func(event InputEvent)
 	elementState ElementState
@@ -15,9 +18,9 @@ type Element struct {
 
 func NewRoot(rootBound rl.Rectangle) Element {
 	elm := Element{
-		style:        Style{},
 		bounds:       rootBound,
-		text:         "",
+		styleFn:      func() Style { return DefaultStyle() },
+		textFn:       func() string { return "" },
 		elementState: ElementStateNone,
 		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
 	}
@@ -25,23 +28,22 @@ func NewRoot(rootBound rl.Rectangle) Element {
 
 }
 
-// TODO: how to manage this parentBound better?
 func NewElement() Element {
 	elm := Element{
-		style:        DefaultStyle(),
-		text:         "",
+		styleFn:      func() Style { return DefaultStyle() },
+		textFn:       func() string { return "" },
 		elementState: ElementStateNone,
 		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
 	}
 	return elm
 }
 
-func (elm *Element) WithStyle(style Style) {
-	elm.style = style
+func (elm *Element) WithStyleFn(styleFn StyleFn) {
+	elm.styleFn = styleFn
 }
 
-func (elm *Element) WithText(text string) {
-	elm.text = text
+func (elm *Element) WithTextFn(textFn TextFn) {
+	elm.textFn = textFn
 }
 
 func (elm *Element) HandleEvents(event InputEvent) {
@@ -72,22 +74,24 @@ func (elm *Element) SetElementState(es ElementState) {
 func (elm *Element) Bounds() rl.Rectangle     { return elm.bounds }
 func (elm *Element) SetBounds(b rl.Rectangle) { elm.bounds = b; elm.applyLayout() }
 
+// TODO: this math is from an LLM verify
 func (elm *Element) ComputeBounds(b rl.Rectangle) {
-	inset := elm.style.Margin
-	if elm.style.Border != nil {
-		inset += elm.style.Border.Thickness
+	style := elm.styleFn()
+	inset := style.Margin
+	if style.Border != nil {
+		inset += style.Border.Thickness
 	}
 	w := b.Width
 	h := b.Height
-	if elm.style.Width != 0 {
-		w = elm.style.Width
+	if style.Width != 0 {
+		w = style.Width
 	}
-	if elm.style.Height != 0 {
-		h = elm.style.Height
+	if style.Height != 0 {
+		h = style.Height
 	}
 	elm.bounds = rl.NewRectangle(
-		b.X+inset+elm.style.OffsetX,
-		b.Y+inset+elm.style.OffsetY,
+		b.X+inset+style.OffsetX,
+		b.Y+inset+style.OffsetY,
 		w-inset*2,
 		h-inset*2,
 	)
@@ -102,26 +106,31 @@ func (elm *Element) AddChild(e Drawable) {
 }
 
 func (elm *Element) Draw() {
-	rl.DrawRectangleLinesEx(elm.Bounds(), elm.style.Border.Thickness, elm.style.Border.Color)
-	if fs := elm.style.Font; fs != nil && elm.text != "" {
-		pos := fs.Position(elm.text, elm.bounds)
-		rl.DrawTextEx(fs.Font, elm.text, pos, fs.Size, fs.Spacing, fs.Color)
+	style := elm.styleFn()
+	rl.DrawRectangleLinesEx(elm.Bounds(), style.Border.Thickness, style.Border.Color)
+
+	text := elm.textFn()
+	if fs := style.Font; fs != nil && text != "" {
+		pos := fs.Position(text, elm.bounds)
+		rl.DrawTextEx(fs.Font, text, pos, fs.Size, fs.Spacing, fs.Color)
 	}
 	for _, child := range elm.Children() {
 		child.Draw()
 	}
 }
 
+// TODO: this math is from an LLM verify
 func (elm *Element) applyLayout() {
+	style := elm.styleFn()
 	n := len(elm.children)
-	if n == 0 || elm.style.Layout == LayoutNone {
+	if n == 0 || style.Layout == LayoutNone {
 		return
 	}
 
-	p := elm.style.Padding
-	g := elm.style.Gap
+	p := style.Padding
+	g := style.Gap
 
-	switch elm.style.Layout {
+	switch style.Layout {
 	case LayoutHorizontal:
 		slotW := (elm.bounds.Width - p*2 - g*float32(n-1)) / float32(n)
 		slotH := elm.bounds.Height - p*2
@@ -139,13 +148,13 @@ func (elm *Element) applyLayout() {
 			y += slotH + g
 		}
 	case LayoutGrid:
-		cols := elm.style.Columns
+		cols := style.Columns
 		if cols <= 0 {
 			cols = 1
 		}
 		rows := (n + cols - 1) / cols
 		slotW := (elm.bounds.Width - p*2 - g*float32(cols-1)) / float32(cols)
-		slotH := elm.style.CellHeight
+		slotH := style.CellHeight
 		if slotH == 0 {
 			slotH = (elm.bounds.Height - p*2 - g*float32(rows-1)) / float32(rows)
 		}
@@ -159,20 +168,15 @@ func (elm *Element) applyLayout() {
 	}
 }
 
-type StyleFn func() Style
 type TypedElement[T any] struct {
 	Element
-	Props   *T
-	styleFn *StyleFn //Current thought is only change style not the container
+	Props *T
 }
 
-func (telm *TypedElement[T]) WithStyleFn(styleFn *StyleFn) {
-	telm.styleFn = styleFn
-}
 func NewTypedElement[T any](bound rl.Rectangle, prop *T) TypedElement[T] {
-	container := NewElement()
-	return TypedElement[T]{
-		Element: container,
+	telm := TypedElement[T]{
+		Element: NewElement(),
 		Props:   prop,
 	}
+	return telm
 }

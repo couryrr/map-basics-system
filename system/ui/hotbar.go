@@ -22,7 +22,7 @@ type HotbarInteractionMessage struct {
 
 type HotbarState interface {
 	SlotItem(i int32) string
-	GetActiveSlot() *int32
+	GetActiveSlot() int32
 }
 
 type HotbarItem struct {
@@ -33,12 +33,23 @@ type HotbarItem struct {
 func NewHotbarItemElement(bounds rl.Rectangle, prop *HotbarItem) framework.TypedElement[HotbarItem] {
 	element := framework.NewTypedElement(bounds, prop)
 
-	element.WithStyle(framework.NewStyle().
-		Border(1, rl.DarkBlue).
-		Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
-		Build())
+	element.WithStyleFn(func() framework.Style {
+		if prop.state.GetActiveSlot() == element.Props.SlotId {
+			return framework.NewStyle().
+				Border(1, rl.Red).
+				Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+				Build()
 
-	element.WithText(prop.state.SlotItem(prop.SlotId))
+		}
+		return framework.NewStyle().
+			Border(1, rl.DarkBlue).
+			Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+			Build()
+	})
+
+	element.WithTextFn(func() string {
+		return prop.state.SlotItem(prop.SlotId)
+	})
 
 	//TODO: The container should manage the state not the caller. All the caller should do is set Styles based on the state.
 	element.AddEventListener(framework.MouseHoverEvent, func(event framework.InputEvent) {
@@ -54,14 +65,16 @@ func NewHotbarItemElement(bounds rl.Rectangle, prop *HotbarItem) framework.Typed
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) framework.Element {
 	element := framework.NewElement()
-	element.WithStyle(framework.NewStyle().Layout(framework.LayoutHorizontal).
-		Width(bounds.Width-197).
-		Height(48).
-		Offset(197, bounds.Height-48).
-		Gap(2).
-		Padding(2).
-		Border(1, rl.DarkGray).
-		Build())
+	element.WithStyleFn(func() framework.Style {
+		return framework.NewStyle().Layout(framework.LayoutHorizontal).
+			Width(bounds.Width-197).
+			Height(48).
+			Offset(197, bounds.Height-48).
+			Gap(2).
+			Padding(2).
+			Border(1, rl.DarkGray).
+			Build()
+	})
 
 	for i := range 10 {
 		ce := NewHotbarItemElement(element.Bounds(), &HotbarItem{

@@ -48,7 +48,10 @@ func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state 
 		broker:  broker,
 		Element: framework.NewRoot(root),
 	}
-	igo.WithStyle(framework.NewStyle().Border(1, rl.DarkGray).Build())
+
+	styleFn := func() framework.Style { return framework.NewStyle().Border(1, rl.DarkGray).Build() }
+
+	igo.WithStyleFn(styleFn)
 
 	hotbar := NewHotbarElement(igo.Bounds(), state.GetHotbarState())
 	registry := NewRegistryElement(igo.Bounds(), state.GetRegistryState())

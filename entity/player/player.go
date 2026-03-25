@@ -15,20 +15,20 @@ const (
 
 type Hotbar struct {
 	Slots      [10]string
-	ActiveSlot *int32
+	ActiveSlot int32
 }
 
 func (h *Hotbar) SlotItem(i int32) string { return h.Slots[i] }
-func (h *Hotbar) GetActiveSlot() *int32   { return h.ActiveSlot }
+func (h *Hotbar) GetActiveSlot() int32   { return h.ActiveSlot }
 
-func (h *Hotbar) SetActive(slot *int32) {
+func (h *Hotbar) SetActive(slot int32) {
 	h.ActiveSlot = slot
 }
 func (h *Hotbar) Assign(slot int32, itemID string) {
 	h.Slots[slot] = itemID
 }
 func (h *Hotbar) Clear() {
-	h.ActiveSlot = nil
+	h.ActiveSlot = -1
 }
 
 type Player struct {
@@ -52,7 +52,7 @@ func NewPlayer(start rl.Vector2) Player {
 		Speed:     400,
 		ZoomLevel: 1.0,
 		Hotbar: Hotbar{
-			ActiveSlot: &i,
+			ActiveSlot: i,
 			Slots:      slots,
 		},
 	}
@@ -68,7 +68,7 @@ func (player *Player) HandleHotbarInteraction(message pubsub.Message) {
 	if hbim, ok := message.Data.(ui.HotbarInteractionMessage); ok {
 		switch hbim.Action {
 		case ui.HotbarActionHover:
-			player.Hotbar.SetActive(&hbim.Slot)
+			player.Hotbar.SetActive(hbim.Slot)
 		case ui.HotbarActionLeave:
 			player.Hotbar.Clear()
 		}
