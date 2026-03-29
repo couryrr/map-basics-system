@@ -27,7 +27,7 @@ func main() {
 	game.Broker.Register(keyboard.TopicInputRotateReset, game.Player.RotateReset)
 	game.Broker.Register(keyboard.TopicInputMove, game.Player.Move)
 	game.Broker.Register(keyboard.TopicInputZoom, game.Player.Zoom)
-	game.Broker.Register(keyboard.TopicInputCursorMoved, game.Igo.HandleMouseEvent)
+	// game.Broker.Register(keyboard.TopicInputCursorMoved, game.Ui.HandleMouseEvent)
 	game.Broker.Register(ui.TopicUiHotbarInteraction, game.Player.HandleHotbarInteraction)
 
 	for !rl.WindowShouldClose() {
@@ -38,7 +38,9 @@ func main() {
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		game.Igo.Draw()
+		if game.Ui != nil {
+			game.Ui.Draw()
+		}
 		rl.EndTextureMode()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)

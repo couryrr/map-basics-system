@@ -30,34 +30,25 @@ type HotbarItem struct {
 	state  HotbarState
 }
 
-func NewHotbarItemElement(bounds rl.Rectangle, prop *HotbarItem) framework.TypedElement[HotbarItem] {
-	element := framework.NewTypedElement(bounds, prop)
+func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) framework.TypedElement[HotbarItem] {
+	element := framework.NewTypedElement(bounds, state)
 
-	element.WithStyleFn(func() framework.Style {
-		if prop.state.GetActiveSlot() == element.Props.SlotId {
-			return framework.NewStyle().
-				Border(1, rl.Red).
-				Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
-				Build()
+	element.WithPropFn(func() framework.Prop {
+		prop := framework.Prop{}
 
-		}
-		return framework.NewStyle().
+		prop.Text = state.state.SlotItem(state.SlotId)
+		prop.Style = framework.NewStyle().
 			Border(1, rl.DarkBlue).
 			Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
 			Build()
-	})
 
-	element.WithTextFn(func() string {
-		return prop.state.SlotItem(prop.SlotId)
-	})
-
-	//TODO: The container should manage the state not the caller. All the caller should do is set Styles based on the state.
-	element.AddEventListener(framework.MouseHoverEvent, func(event framework.InputEvent) {
-		if rl.CheckCollisionPointRec(event.Position, element.Bounds()) {
-			element.SetElementState(framework.ElementStateHovered)
-		} else {
-			element.SetElementState(framework.ElementStateNone)
+		if state.state.GetActiveSlot() == element.Props.SlotId {
+			prop.Style = framework.NewStyle().
+				Border(1, rl.Red).
+				Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+				Build()
 		}
+		return prop
 	})
 
 	return element
@@ -65,15 +56,17 @@ func NewHotbarItemElement(bounds rl.Rectangle, prop *HotbarItem) framework.Typed
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) framework.Element {
 	element := framework.NewElement()
-	element.WithStyleFn(func() framework.Style {
-		return framework.NewStyle().Layout(framework.LayoutHorizontal).
-			Width(bounds.Width-197).
-			Height(48).
-			Offset(197, bounds.Height-48).
-			Gap(2).
-			Padding(2).
-			Border(1, rl.DarkGray).
-			Build()
+	element.WithPropFn(func() framework.Prop {
+		return framework.Prop{
+			Style: framework.NewStyle().Layout(framework.LayoutHorizontal).
+				Width(bounds.Width-197).
+				Height(48).
+				Offset(197, bounds.Height-48).
+				Gap(2).
+				Padding(2).
+				Border(1, rl.DarkGray).
+				Build(),
+		}
 	})
 
 	for i := range 10 {

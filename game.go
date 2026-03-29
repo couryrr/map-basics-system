@@ -4,6 +4,7 @@ import (
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/framework/pubsub"
+	framework "github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/system/camera"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/system/setting"
@@ -22,7 +23,7 @@ type Game struct {
 	RenderContext  *renderer.RenderContext
 	Player         *player.Player
 	World          *world.World
-	Igo            *ui.InGameOverlay
+	Ui             *framework.Root
 	SystemSettings SystemSettings
 	IsFullScreen   bool
 }
@@ -41,8 +42,8 @@ func (game *Game) LoadResources() {
 	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
 	game.GameCamera = &cam
 
-	igo := ui.NewInGameOverlay(game.Broker, *game.RenderContext, game)
-	game.Igo = &igo
+	root := ui.NewInGameOverlay(game)
+	game.Ui = &root
 }
 
 func (game *Game) ToggleScreenSize(message pubsub.Message) {

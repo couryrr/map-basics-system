@@ -7,20 +7,11 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type DrawContext interface {
-	GetHotbarState() HotbarState
-	GetRenderContext() *renderer.RenderContext
-}
-
-type InteractionResult struct {
-	Topic   pubsub.Topic
-	Message pubsub.Message
-}
-
-// TODO: Another state I am just not sure of...
 type InGameOverlayState interface {
 	GetHotbarState() HotbarState
 	GetRegistryState() RegistryState
+
+	GetRenderContext() *renderer.RenderContext
 }
 
 type InGameOverlay struct {
@@ -28,35 +19,23 @@ type InGameOverlay struct {
 	framework.Element
 }
 
-func (igo *InGameOverlay) HandleMouseEvent(messge pubsub.Message) {
-	if event, ok := messge.Data.(framework.InputEvent); ok {
-		for _, child := range igo.Children() {
-			if rl.CheckCollisionPointRec(event.Position, child.Bounds()) {
-				child.HandleEvents(event)
-			} else {
-				igo.broker.Send(TopicUiHotbarInteraction, pubsub.Message{
-					Data: HotbarInteractionMessage{Action: HotbarActionLeave},
-				})
-			}
+func NewInGameOverlay(state InGameOverlayState) framework.Root {
+	root := framework.NewRoot(rl.NewRectangle(0, 0, state.GetRenderContext().VirtualWidth, state.GetRenderContext().VirtualHeight))
+
+	igo := framework.NewElement()
+	igo.WithPropFn(func() framework.Prop {
+		return framework.Prop{
+			Style: framework.NewStyle().Border(1, rl.DarkGray).Build(),
 		}
-	}
-}
+	})
 
-func NewInGameOverlay(broker *pubsub.Broker, rctx renderer.RenderContext, state InGameOverlayState) InGameOverlay {
-	root := rl.NewRectangle(0, 0, rctx.VirtualWidth, rctx.VirtualHeight)
-	igo := InGameOverlay{
-		broker:  broker,
-		Element: framework.NewRoot(root),
-	}
-
-	styleFn := func() framework.Style { return framework.NewStyle().Border(1, rl.DarkGray).Build() }
-
-	igo.WithStyleFn(styleFn)
+	root.AddChild(&igo)
 
 	hotbar := NewHotbarElement(igo.Bounds(), state.GetHotbarState())
 	registry := NewRegistryElement(igo.Bounds(), state.GetRegistryState())
 
 	igo.AddChild(&hotbar)
 	igo.AddChild(&registry)
-	return igo
+
+	return root
 }

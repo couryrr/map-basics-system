@@ -67,6 +67,10 @@ func DefaultStyle() Style {
 		Margin:  1,
 		Width:   1,
 		Height:  1,
+		Border: &Border{
+			Thickness: 1,
+			Color: rl.Gray,
+		},
 	}
 }
 
