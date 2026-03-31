@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
-	"github.com/couryrr/map-basics-system/framework/pubsub"
+	"github.com/couryrr/map-basics-system/framework/queue"
 	framework "github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/system/camera"
 	"github.com/couryrr/map-basics-system/system/renderer"
@@ -18,7 +18,7 @@ type SystemSettings struct {
 }
 
 type Game struct {
-	Broker         *pubsub.Broker
+	EventQueue         *queue.EventQueue
 	GameCamera     *camera.GameCamera
 	RenderContext  *renderer.RenderContext
 	Player         *player.Player
@@ -46,7 +46,7 @@ func (game *Game) LoadResources() {
 	game.Ui = &root
 }
 
-func (game *Game) ToggleScreenSize(message pubsub.Message) {
+func (game *Game) ToggleScreenSize(event *queue.Event) {
 	rl.ToggleFullscreen()
 	newScreenSize := rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 	if !game.IsFullScreen {
@@ -89,9 +89,9 @@ func (game *Game) Unload() {
 
 func NewGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	// TODO: This will load setting from files.
-	broker := pubsub.NewBroker()
+	broker := queue.NewEventQueue()
 	return Game{
-		Broker:        &broker,
+		EventQueue:        &broker,
 		Player:        nil,
 		GameCamera:    nil,
 		RenderContext: nil,

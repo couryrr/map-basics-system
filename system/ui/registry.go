@@ -13,19 +13,19 @@ type RegistryState interface {
 }
 
 // TODO: Do not pass GameItem directly could be an interface
-func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) framework.TypedElement[world.GameItem] {
-	element := framework.NewTypedElement(bounds, gameItem)
-	element.WithPropFn(func() framework.Prop {
-		return framework.Prop{
-			Style: framework.NewStyle().
-				Layout(framework.LayoutGrid).
+func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) ui.TypedElement[world.GameItem] {
+	element := ui.NewTypedElement(bounds, gameItem)
+	element.WithPropFn(func() ui.Prop {
+		return ui.Prop{
+			Style: ui.NewStyle().
+				Layout(ui.LayoutGrid).
 				Width(200).
 				Border(1, rl.DarkGray).
 				Gap(2).
 				Padding(4).
 				CellHeight(48).
 				Columns(2).
-				Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+				Font(ui.DefaultFont(10, rl.DarkGray, ui.TextAlignCenter)).
 				Build(),
 			Text: gameItem.Name,
 		}
@@ -33,12 +33,12 @@ func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) frame
 	return element
 }
 
-func NewRegistryElement(bounds rl.Rectangle, state RegistryState) framework.Element {
-	element := framework.NewElement()
-	element.WithPropFn(func() framework.Prop {
-		return framework.Prop{
-			Style: framework.NewStyle().
-				Layout(framework.LayoutGrid).
+func NewRegistryElement(bounds rl.Rectangle, state RegistryState) ui.Element {
+	element := ui.NewElement()
+	element.WithPropFn(func() ui.Prop {
+		return ui.Prop{
+			Style: ui.NewStyle().
+				Layout(ui.LayoutGrid).
 				Width(200).
 				Border(1, rl.DarkGray).
 				Gap(2).

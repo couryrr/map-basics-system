@@ -1,45 +1,56 @@
 package keyboard
 
 import (
-	"github.com/couryrr/map-basics-system/framework/pubsub"
+	"github.com/couryrr/map-basics-system/framework/queue"
 	"github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 const (
-	TopicScreenToggle     pubsub.Topic = "screen.toggle"
-	TopicInputMove        pubsub.Topic = "input.move"
-	TopicInputRotate      pubsub.Topic = "input.rotate"
-	TopicInputRotateReset pubsub.Topic = "input.rotate.reset"
-	TopicInputZoom        pubsub.Topic = "input.zoom"
-	TopicInputCursorMoved pubsub.Topic = "input.cursor.moved"
+    MouseMoved queue.EventKind = iota
+    MouseClicked
+    KeyPressed
 )
 
-func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
+const (
+	TopicScreenToggle     queue.Topic = "screen.toggle"
+	TopicInputMove        queue.Topic = "input.move"
+	TopicInputRotate      queue.Topic = "input.rotate"
+	TopicInputRotateReset queue.Topic = "input.rotate.reset"
+	TopicInputZoom        queue.Topic = "input.zoom"
+	TopicInputCursorMoved queue.Topic = "input.cursor.moved"
+)
+
+func HandleInput(ui *ui.Root, broker *queue.EventQueue, rCtx *renderer.RenderContext) {
 	if rl.IsKeyPressed(rl.KeyF11) {
-		broker.Send(TopicScreenToggle, pubsub.Message{})
+		broker.Push(&queue.Event{})
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		broker.Send(TopicInputRotate, pubsub.Message{Data: float32(90)})
+		broker.Push(&queue.Event{})
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		broker.Send(TopicInputRotate, pubsub.Message{Data: float32(-90)})
+		broker.Push(&queue.Event{})
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		broker.Send(TopicInputRotateReset, pubsub.Message{})
+		broker.Push(&queue.Event{
+			Kind: 1,
+			Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
+		})
 	}
 
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft){
+		ui.Click(rCtx.ScreenToVirtual(rl.GetMousePosition()))
+	}
 	delta := rl.GetMouseDelta()
 	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		broker.Send(TopicInputCursorMoved, pubsub.Message{Data: framework.InputEvent{
-			Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
-			EventType: framework.MouseHoverEvent,
-		}})
+		// broker.Send(TopicInputCursorMoved, pubsub.Event{Data: framework.InputEvent{
+		// 	Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
+		// 	EventType: framework.MouseHoverEvent,}})
 	}
 
 	if wheel := rl.GetMouseWheelMove(); wheel != 0 {
-		broker.Send(TopicInputZoom, pubsub.Message{Data: wheel})
+		broker.Push(&queue.Event{})
 	}
 
 	direction := rl.Vector2Zero()
@@ -62,6 +73,6 @@ func HandleInput(broker *pubsub.Broker, rCtx *renderer.RenderContext) {
 	}
 
 	if !rl.Vector2Equals(direction, rl.Vector2Zero()) {
-		broker.Send(TopicInputMove, pubsub.Message{Data: direction})
+		broker.Push(&queue.Event{})
 	}
 }

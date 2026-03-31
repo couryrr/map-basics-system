@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/couryrr/map-basics-system/framework/pubsub"
+	"github.com/couryrr/map-basics-system/framework/queue"
 	"github.com/couryrr/map-basics-system/framework/ui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -9,7 +9,7 @@ import (
 type HotbarAction string
 
 const (
-	TopicUiHotbarInteraction pubsub.Topic = "ui.hotbar.interaction"
+	TopicUiHotbarInteraction queue.Topic = "ui.hotbar.interaction"
 	HotbarActionHover        HotbarAction = "hover"
 	HotbarActionLeave        HotbarAction = "leave"
 )
@@ -30,35 +30,38 @@ type HotbarItem struct {
 	state  HotbarState
 }
 
-func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) framework.TypedElement[HotbarItem] {
-	element := framework.NewTypedElement(bounds, state)
-
-	element.WithPropFn(func() framework.Prop {
-		prop := framework.Prop{}
+func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) ui.TypedElement[HotbarItem] {
+	element := ui.NewTypedElement(bounds, state)
+	element.WithPropFn(func() ui.Prop {
+		prop := ui.Prop{}
 
 		prop.Text = state.state.SlotItem(state.SlotId)
-		prop.Style = framework.NewStyle().
+		prop.Style = ui.NewStyle().
 			Border(1, rl.DarkBlue).
-			Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+			Font(ui.DefaultFont(10, rl.DarkGray, ui.TextAlignCenter)).
 			Build()
 
-		if state.state.GetActiveSlot() == element.Props.SlotId {
-			prop.Style = framework.NewStyle().
+		if state.state.GetActiveSlot() == element.Type.SlotId {
+			prop.Style = ui.NewStyle().
 				Border(1, rl.Red).
-				Font(framework.DefaultFont(10, rl.DarkGray, framework.TextAlignCenter)).
+				Font(ui.DefaultFont(10, rl.DarkGray, ui.TextAlignCenter)).
 				Build()
 		}
 		return prop
 	})
 
+	element.OnClick(func(e *ui.UiEvent) {
+		rl.TraceLog(rl.LogInfo, "the value is: %v", element.Type.SlotId)
+	})
+
 	return element
 }
 
-func NewHotbarElement(bounds rl.Rectangle, state HotbarState) framework.Element {
-	element := framework.NewElement()
-	element.WithPropFn(func() framework.Prop {
-		return framework.Prop{
-			Style: framework.NewStyle().Layout(framework.LayoutHorizontal).
+func NewHotbarElement(bounds rl.Rectangle, state HotbarState) ui.Element {
+	element := ui.NewElement()
+	element.WithPropFn(func() ui.Prop {
+		return ui.Prop{
+			Style: ui.NewStyle().Layout(ui.LayoutHorizontal).
 				Width(bounds.Width-197).
 				Height(48).
 				Offset(197, bounds.Height-48).

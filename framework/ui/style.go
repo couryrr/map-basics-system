@@ -1,4 +1,4 @@
-package framework
+package ui
 
 import (
 	"image/color"

@@ -1,4 +1,4 @@
-package framework
+package ui
 
 import (
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -46,7 +46,8 @@ type Drawable interface {
 	ComputeBounds(rl.Rectangle)
 	SetBounds(rl.Rectangle)
 	Children() []Drawable
-	AddEventListener(eventType InputEventType, cb func(event InputEvent))
-	HandleEvents(event InputEvent)
-	ElementState() ElementState
+	Parent() Drawable
+	SetParent(parent Drawable)
+	hitTest(point rl.Vector2) Drawable
+	bubble(uiEvent *UiEvent)
 }

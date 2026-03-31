@@ -1,8 +1,17 @@
-package framework
+package ui
 
 import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
+
+type UiEvent struct {
+	point rl.Vector2
+	stop  bool
+}
+
+func (e *UiEvent) StopPropagation() {
+	e.stop = true
+}
 
 type Prop struct {
 	Style Style
@@ -11,68 +20,34 @@ type Prop struct {
 
 type PropFn func() Prop
 
-type Root struct {
-	Element
-	events []InputEvent
-}
-
-func NewRoot(rootBound rl.Rectangle) Root {
-	root := Root{
-		Element: NewElement(),
-		events:  make([]InputEvent, 100),
-	}
-	root.bounds = rootBound
-	root.WithPropFn(func() Prop {
-		return Prop{
-			Style: DefaultStyle(),
-		}
-	})
-	return root
-}
-
 type Element struct {
-	bounds       rl.Rectangle
-	propFn       PropFn
-	children     []Drawable
-	inputEvents  map[InputEventType][]func(event InputEvent)
-	elementState ElementState
+	bounds   rl.Rectangle
+	propFn   PropFn
+	parent   Drawable
+	children []Drawable
+	onClick  func(e *UiEvent)
 }
 
 func NewElement() Element {
-	elm := Element{
-		elementState: ElementStateNone,
-		inputEvents:  make(map[InputEventType][]func(event InputEvent)),
-	}
+	elm := Element{}
 	return elm
+}
+
+type TypedElement[T any] struct {
+	Element
+	Type *T
+}
+
+func NewTypedElement[T any](bound rl.Rectangle, prop *T) TypedElement[T] {
+	telm := TypedElement[T]{
+		Element: NewElement(),
+		Type:   prop,
+	}
+	return telm
 }
 
 func (elm *Element) WithPropFn(propFn PropFn) {
 	elm.propFn = propFn
-}
-
-func (elm *Element) HandleEvents(event InputEvent) {
-	if elm.inputEvents != nil {
-		callbacks := elm.inputEvents[event.EventType]
-		for _, cb := range callbacks {
-			cb(event)
-		}
-	}
-
-	for _, child := range elm.children {
-		child.HandleEvents(event)
-	}
-}
-
-func (elm *Element) AddEventListener(eventType InputEventType, cb func(event InputEvent)) {
-	elm.inputEvents[eventType] = append(elm.inputEvents[eventType], cb)
-}
-
-func (elm *Element) ElementState() ElementState {
-	return elm.elementState
-}
-
-func (elm *Element) SetElementState(es ElementState) {
-	elm.elementState = es
 }
 
 func (elm *Element) Bounds() rl.Rectangle     { return elm.bounds }
@@ -104,11 +79,40 @@ func (elm *Element) ComputeBounds(b rl.Rectangle) {
 	}
 }
 
-func (elm *Element) Children() []Drawable { return elm.children }
+func (elm *Element) Parent() Drawable          { return elm.parent }
+func (elm *Element) SetParent(parent Drawable) { elm.parent = parent }
+func (elm *Element) Children() []Drawable      { return elm.children }
 func (elm *Element) AddChild(e Drawable) {
 	e.ComputeBounds(elm.Bounds())
+	e.SetParent(elm)
 	elm.children = append(elm.children, e)
 	elm.applyLayout()
+}
+
+func (elm *Element) OnClick(fn func(e *UiEvent)) {
+    elm.onClick = fn
+}
+
+func (elm *Element) hitTest(point rl.Vector2) Drawable {
+	for i := len(elm.children) - 1; i >= 0; i-- {
+		if hit := elm.children[i].hitTest(point); hit != nil {
+			return hit
+		}
+	}
+	if rl.CheckCollisionPointRec(point, elm.bounds) {
+		return elm
+	}
+	return nil
+}
+
+func (elm *Element) bubble(e *UiEvent) {
+	if elm.onClick != nil {
+		elm.onClick(e)
+	}
+
+	if !e.stop && elm.parent != nil {
+		elm.parent.bubble(e)
+	}
 }
 
 func (elm *Element) Draw() {
@@ -176,17 +180,4 @@ func (elm *Element) applyLayout() {
 			}
 		}
 	}
-}
-
-type TypedElement[T any] struct {
-	Element
-	Props *T
-}
-
-func NewTypedElement[T any](bound rl.Rectangle, prop *T) TypedElement[T] {
-	telm := TypedElement[T]{
-		Element: NewElement(),
-		Props:   prop,
-	}
-	return telm
 }
