@@ -32,12 +32,15 @@ type HotbarItem struct {
 
 func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) ui.TypedElement[HotbarItem] {
 	element := ui.NewTypedElement(bounds, state)
-	element.WithPropFn(func() ui.Prop {
+	element.WithPropFn(func(ctx *ui.UiContext) ui.Prop {
+		borderColor := rl.DarkBlue
+		if element.Id == ctx.HoveredId {
+			borderColor = rl.Red
+		}
 		prop := ui.Prop{}
-
 		prop.Text = state.state.SlotItem(state.SlotId)
 		prop.Style = ui.NewStyle().
-			Border(1, rl.DarkBlue).
+			Border(1, borderColor).
 			Font(ui.DefaultFont(10, rl.DarkGray, ui.TextAlignCenter)).
 			Build()
 
@@ -59,7 +62,7 @@ func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) ui.TypedElemen
 
 func NewHotbarElement(bounds rl.Rectangle, state HotbarState) ui.Element {
 	element := ui.NewElement()
-	element.WithPropFn(func() ui.Prop {
+	element.WithPropFn(func(ctx *ui.UiContext) ui.Prop {
 		return ui.Prop{
 			Style: ui.NewStyle().Layout(ui.LayoutHorizontal).
 				Width(bounds.Width-197).

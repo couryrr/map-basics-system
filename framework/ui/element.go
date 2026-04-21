@@ -2,6 +2,7 @@ package ui
 
 import (
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/google/uuid"
 )
 
 type UiEvent interface {
@@ -15,9 +16,10 @@ type Prop struct {
 	Text  string
 }
 
-type PropFn func() Prop
+type PropFn func(ctx *UiContext) Prop
 
 type Element struct {
+	Id       string
 	bounds   rl.Rectangle
 	propFn   PropFn
 	parent   Drawable
@@ -26,7 +28,7 @@ type Element struct {
 }
 
 func NewElement() Element {
-	elm := Element{}
+	elm := Element{Id: uuid.NewString()}
 	return elm
 }
 
@@ -47,19 +49,25 @@ func (elm *Element) WithPropFn(propFn PropFn) {
 	elm.propFn = propFn
 }
 
-func (elm *Element) Bounds() rl.Rectangle     { return elm.bounds }
-func (elm *Element) SetBounds(b rl.Rectangle) { elm.bounds = b; elm.applyLayout() }
+func (elm *Element) Bounds() rl.Rectangle { return elm.bounds }
+func (elm *Element) SetBounds(bounds rl.Rectangle) {
+	elm.bounds = bounds
+}
 
 // TODO: this math is from an LLM verify
-func (elm *Element) ComputeBounds(b rl.Rectangle) {
+func (elm *Element) ComputeBounds(ctx *UiContext) {
+	container := elm.Bounds()
+	if elm.Parent() != nil {
+		container = elm.Parent().Bounds()
+	}
 	if elm.propFn != nil {
-		props := elm.propFn()
+		props := elm.propFn(ctx)
 		inset := props.Style.Margin
 		if props.Style.Border != nil {
 			inset += props.Style.Border.Thickness
 		}
-		w := b.Width
-		h := b.Height
+		w := container.Width
+		h := container.Height
 		if props.Style.Width != 0 {
 			w = props.Style.Width
 		}
@@ -67,39 +75,40 @@ func (elm *Element) ComputeBounds(b rl.Rectangle) {
 			h = props.Style.Height
 		}
 		elm.bounds = rl.NewRectangle(
-			b.X+inset+props.Style.OffsetX,
-			b.Y+inset+props.Style.OffsetY,
+			container.X+inset+props.Style.OffsetX,
+			container.Y+inset+props.Style.OffsetY,
 			w-inset*2,
 			h-inset*2,
 		)
-		elm.applyLayout()
 	}
+	for _, child := range elm.Children() {
+		child.ComputeBounds(ctx)
+	}
+	elm.applyLayout(ctx)
 }
 
 func (elm *Element) Parent() Drawable          { return elm.parent }
 func (elm *Element) SetParent(parent Drawable) { elm.parent = parent }
 func (elm *Element) Children() []Drawable      { return elm.children }
 func (elm *Element) AddChild(e Drawable) {
-	e.ComputeBounds(elm.Bounds())
 	e.SetParent(elm)
 	elm.children = append(elm.children, e)
-	elm.applyLayout()
 }
 
 func (elm *Element) OnClick(fn func(e UiEvent)) {
 	elm.onClick = fn
 }
 
-func (elm *Element) hitTest(point *rl.Vector2) Drawable {
+func (elm *Element) hitTest(point *rl.Vector2) string {
 	for i := len(elm.Children()) - 1; i >= 0; i-- {
-		if hit := elm.children[i].hitTest(point); hit != nil {
+		if hit := elm.children[i].hitTest(point); hit != "" {
 			return hit
 		}
 	}
 	if rl.CheckCollisionPointRec(*point, elm.bounds) {
-		return elm
+		return elm.Id
 	}
-	return nil
+	return ""
 }
 
 func (elm *Element) bubble(e UiEvent) {
@@ -114,7 +123,7 @@ func (elm *Element) bubble(e UiEvent) {
 
 func (elm *Element) draw(ctx *UiContext) {
 	if elm.propFn != nil {
-		props := elm.propFn()
+		props := elm.propFn(ctx)
 		rl.DrawRectangleLinesEx(elm.Bounds(), props.Style.Border.Thickness, props.Style.Border.Color)
 
 		if fs := props.Style.Font; fs != nil && props.Text != "" {
@@ -129,9 +138,9 @@ func (elm *Element) draw(ctx *UiContext) {
 }
 
 // TODO: this math is from an LLM verify
-func (elm *Element) applyLayout() {
+func (elm *Element) applyLayout(ctx *UiContext) {
 	if elm.propFn != nil {
-		props := elm.propFn()
+		props := elm.propFn(ctx)
 		n := len(elm.children)
 		if n == 0 || props.Style.Layout == LayoutNone {
 			return

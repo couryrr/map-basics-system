@@ -20,7 +20,7 @@ type InGameOverlay struct {
 func NewInGameOverlay(state InGameOverlayState) *ui.Element {
 	igo := ui.NewElement()
 	igo.SetBounds(rl.NewRectangle(0, 0, state.GetRenderContext().VirtualWidth, state.GetRenderContext().VirtualHeight))
-	igo.WithPropFn(func() ui.Prop {
+	igo.WithPropFn(func(ctx *ui.UiContext) ui.Prop {
 		return ui.Prop{
 			Style: ui.NewStyle().Border(1, rl.DarkGray).Build(),
 		}

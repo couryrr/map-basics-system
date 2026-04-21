@@ -2,15 +2,22 @@ package ui
 
 type UiManager struct {
 	root    Drawable
-	Hovered Drawable
+	HoveredId string
+	dirty bool
 }
 
 func (um *UiManager) Update(event UiEvent) {
+	if um.dirty {
+		um.root.ComputeBounds(&UiContext{
+			HoveredId: um.HoveredId,
+		})
+		um.dirty = false
+	}
 	if um.root != nil && event != nil {
 		if event.GetPosition() != nil {
-			hovered := um.root.hitTest(event.GetPosition())
-			if hovered != nil {
-				um.Hovered = hovered
+			hoveredId := um.root.hitTest(event.GetPosition())
+			if hoveredId != "" {
+				um.HoveredId = hoveredId
 				event.Consume()
 			}
 		}
@@ -19,7 +26,7 @@ func (um *UiManager) Update(event UiEvent) {
 
 func (um *UiManager) Draw() {
 	ctx := &UiContext{
-		Hovered: um.Hovered,
+		HoveredId: um.HoveredId,
 	}
 
 	um.root.draw(ctx)
@@ -28,6 +35,6 @@ func (um *UiManager) Draw() {
 func NewUiManager(root Drawable) *UiManager {
 	return &UiManager{
 		root:    root,
-		Hovered: nil,
+		dirty: true,
 	}
 }

@@ -2,7 +2,10 @@ module github.com/couryrr/map-basics-system
 
 go 1.25.4
 
-require github.com/gen2brain/raylib-go/raylib v0.55.1
+require (
+	github.com/gen2brain/raylib-go/raylib v0.55.1
+	github.com/google/uuid v1.6.0
+)
 
 require (
 	github.com/ebitengine/purego v0.9.1 // indirect

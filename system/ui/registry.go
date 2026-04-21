@@ -15,12 +15,16 @@ type RegistryState interface {
 // TODO: Do not pass GameItem directly could be an interface
 func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) ui.TypedElement[world.GameItem] {
 	element := ui.NewTypedElement(bounds, gameItem)
-	element.WithPropFn(func() ui.Prop {
+	element.WithPropFn(func(ctx *ui.UiContext) ui.Prop {
+		borderColor := rl.DarkGray
+		if element.Id == ctx.HoveredId {
+			borderColor = rl.Red
+		}
 		return ui.Prop{
 			Style: ui.NewStyle().
 				Layout(ui.LayoutGrid).
 				Width(200).
-				Border(1, rl.DarkGray).
+				Border(1, borderColor).
 				Gap(2).
 				Padding(4).
 				CellHeight(48).
@@ -35,7 +39,7 @@ func NewRegistryItemElement(bounds rl.Rectangle, gameItem *world.GameItem) ui.Ty
 
 func NewRegistryElement(bounds rl.Rectangle, state RegistryState) ui.Element {
 	element := ui.NewElement()
-	element.WithPropFn(func() ui.Prop {
+	element.WithPropFn(func(ctx *ui.UiContext) ui.Prop {
 		return ui.Prop{
 			Style: ui.NewStyle().
 				Layout(ui.LayoutGrid).

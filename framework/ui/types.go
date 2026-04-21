@@ -29,17 +29,17 @@ const (
 )
 
 type UiContext struct{
-	Hovered Drawable
+	HoveredId string
 }
 
 type Drawable interface {
 	Bounds() rl.Rectangle
-	ComputeBounds(rl.Rectangle)
+	ComputeBounds(ctx *UiContext)
 	SetBounds(rl.Rectangle)
 	Children() []Drawable
 	Parent() Drawable
 	SetParent(parent Drawable)
 	draw(ctx *UiContext)
-	hitTest(point *rl.Vector2) Drawable
+	hitTest(point *rl.Vector2) string
 	bubble(event UiEvent)
 }

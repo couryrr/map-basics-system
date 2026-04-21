@@ -27,8 +27,8 @@ func main() {
 		game.EventQueue.Drain()
 		event := keyboard.HandleInput(game.RenderContext)
 		game.UiManager.Update(event)
-		if game.UiManager.Hovered != nil {
-			rl.TraceLog(rl.LogInfo, "%v", game.UiManager.Hovered)
+		if game.UiManager.HoveredId != "" {
+			rl.TraceLog(rl.LogInfo, "%v", game.UiManager.HoveredId)
 		}
 		game.Update()
 		rl.BeginTextureMode(*game.RenderContext.RenderTexture)
