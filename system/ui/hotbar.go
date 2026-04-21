@@ -50,7 +50,7 @@ func NewHotbarItemElement(bounds rl.Rectangle, state *HotbarItem) ui.TypedElemen
 		return prop
 	})
 
-	element.OnClick(func(e *ui.UiEvent) {
+	element.OnClick(func(e ui.UiEvent) {
 		rl.TraceLog(rl.LogInfo, "the value is: %v", element.Type.SlotId)
 	})
 

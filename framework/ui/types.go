@@ -28,26 +28,18 @@ const (
 	MouseDragEvent
 )
 
-const (
-	ElementStateNone ElementState = iota
-	ElementStateHovered
-	ElementStateActive
-	ElementStateFocused
-)
-
-type InputEvent struct {
-	Position  rl.Vector2
-	EventType InputEventType
+type UiContext struct{
+	Hovered Drawable
 }
 
 type Drawable interface {
-	Draw()
 	Bounds() rl.Rectangle
 	ComputeBounds(rl.Rectangle)
 	SetBounds(rl.Rectangle)
 	Children() []Drawable
 	Parent() Drawable
 	SetParent(parent Drawable)
-	hitTest(point rl.Vector2) Drawable
-	bubble(uiEvent *UiEvent)
+	draw(ctx *UiContext)
+	hitTest(point *rl.Vector2) Drawable
+	bubble(event UiEvent)
 }

@@ -4,13 +4,10 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type UiEvent struct {
-	point rl.Vector2
-	stop  bool
-}
-
-func (e *UiEvent) StopPropagation() {
-	e.stop = true
+type UiEvent interface {
+	IsConsumed() bool
+	Consume()
+	GetPosition() *rl.Vector2
 }
 
 type Prop struct {
@@ -25,7 +22,7 @@ type Element struct {
 	propFn   PropFn
 	parent   Drawable
 	children []Drawable
-	onClick  func(e *UiEvent)
+	onClick  func(e UiEvent)
 }
 
 func NewElement() Element {
@@ -41,7 +38,7 @@ type TypedElement[T any] struct {
 func NewTypedElement[T any](bound rl.Rectangle, prop *T) TypedElement[T] {
 	telm := TypedElement[T]{
 		Element: NewElement(),
-		Type:   prop,
+		Type:    prop,
 	}
 	return telm
 }
@@ -89,33 +86,33 @@ func (elm *Element) AddChild(e Drawable) {
 	elm.applyLayout()
 }
 
-func (elm *Element) OnClick(fn func(e *UiEvent)) {
-    elm.onClick = fn
+func (elm *Element) OnClick(fn func(e UiEvent)) {
+	elm.onClick = fn
 }
 
-func (elm *Element) hitTest(point rl.Vector2) Drawable {
-	for i := len(elm.children) - 1; i >= 0; i-- {
+func (elm *Element) hitTest(point *rl.Vector2) Drawable {
+	for i := len(elm.Children()) - 1; i >= 0; i-- {
 		if hit := elm.children[i].hitTest(point); hit != nil {
 			return hit
 		}
 	}
-	if rl.CheckCollisionPointRec(point, elm.bounds) {
+	if rl.CheckCollisionPointRec(*point, elm.bounds) {
 		return elm
 	}
 	return nil
 }
 
-func (elm *Element) bubble(e *UiEvent) {
+func (elm *Element) bubble(e UiEvent) {
 	if elm.onClick != nil {
 		elm.onClick(e)
 	}
 
-	if !e.stop && elm.parent != nil {
+	if !e.IsConsumed() && elm.parent != nil {
 		elm.parent.bubble(e)
 	}
 }
 
-func (elm *Element) Draw() {
+func (elm *Element) draw(ctx *UiContext) {
 	if elm.propFn != nil {
 		props := elm.propFn()
 		rl.DrawRectangleLinesEx(elm.Bounds(), props.Style.Border.Thickness, props.Style.Border.Color)
@@ -126,7 +123,7 @@ func (elm *Element) Draw() {
 		}
 
 		for _, child := range elm.Children() {
-			child.Draw()
+			child.draw(ctx)
 		}
 	}
 }

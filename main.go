@@ -25,15 +25,19 @@ func main() {
 
 	for !rl.WindowShouldClose() {
 		game.EventQueue.Drain()
-		keyboard.HandleInput(game.Ui, game.EventQueue, game.RenderContext)
+		event := keyboard.HandleInput(game.RenderContext)
+		game.UiManager.Update(event)
+		if game.UiManager.Hovered != nil {
+			rl.TraceLog(rl.LogInfo, "%v", game.UiManager.Hovered)
+		}
 		game.Update()
 		rl.BeginTextureMode(*game.RenderContext.RenderTexture)
 		rl.ClearBackground(rl.White)
 		rl.BeginMode2D(*game.GameCamera.Camera)
 		game.Draw()
 		rl.EndMode2D()
-		if game.Ui != nil {
-			game.Ui.Draw()
+		if game.UiManager != nil {
+			game.UiManager.Draw()
 		}
 		rl.EndTextureMode()
 		rl.BeginDrawing()

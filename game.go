@@ -4,7 +4,7 @@ import (
 	"github.com/couryrr/map-basics-system/config"
 	"github.com/couryrr/map-basics-system/entity/player"
 	"github.com/couryrr/map-basics-system/framework/queue"
-	framework "github.com/couryrr/map-basics-system/framework/ui"
+	uiframework "github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/system/camera"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	"github.com/couryrr/map-basics-system/system/setting"
@@ -18,12 +18,12 @@ type SystemSettings struct {
 }
 
 type Game struct {
-	EventQueue         *queue.EventQueue
+	EventQueue     *queue.EventQueue
 	GameCamera     *camera.GameCamera
 	RenderContext  *renderer.RenderContext
 	Player         *player.Player
 	World          *world.World
-	Ui             *framework.Root
+	UiManager      *uiframework.UiManager
 	SystemSettings SystemSettings
 	IsFullScreen   bool
 }
@@ -42,8 +42,8 @@ func (game *Game) LoadResources() {
 	cam := camera.NewGameCamera(rl.NewVector2(p1.Position.X, p1.Position.Y), rl.NewVector2(float32(renderContext.VirtualWidth/2), float32(renderContext.VirtualHeight/2)), 0.0, 1.0)
 	game.GameCamera = &cam
 
-	root := ui.NewInGameOverlay(game)
-	game.Ui = &root
+	igo := ui.NewInGameOverlay(game) 
+	game.UiManager = uiframework.NewUiManager(igo)
 }
 
 func (game *Game) ToggleScreenSize(event *queue.Event) {
@@ -91,7 +91,7 @@ func NewGame(windowedScreenSize, screenSize rl.Vector2) Game {
 	// TODO: This will load setting from files.
 	broker := queue.NewEventQueue()
 	return Game{
-		EventQueue:        &broker,
+		EventQueue:    &broker,
 		Player:        nil,
 		GameCamera:    nil,
 		RenderContext: nil,

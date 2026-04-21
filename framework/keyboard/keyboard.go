@@ -2,15 +2,14 @@ package keyboard
 
 import (
 	"github.com/couryrr/map-basics-system/framework/queue"
-	"github.com/couryrr/map-basics-system/framework/ui"
 	"github.com/couryrr/map-basics-system/system/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 const (
-    MouseMoved queue.EventKind = iota
-    MouseClicked
-    KeyPressed
+	MouseMoved queue.EventKind = iota
+	MouseClicked
+	KeyPressed
 )
 
 const (
@@ -19,38 +18,49 @@ const (
 	TopicInputRotate      queue.Topic = "input.rotate"
 	TopicInputRotateReset queue.Topic = "input.rotate.reset"
 	TopicInputZoom        queue.Topic = "input.zoom"
-	TopicInputCursorMoved queue.Topic = "input.cursor.moved"
 )
 
-func HandleInput(ui *ui.Root, broker *queue.EventQueue, rCtx *renderer.RenderContext) {
+type InputEvent struct {
+	Type     string
+	State    string
+	AltKey   string
+	Key      string
+	Position *rl.Vector2
+	Consumed bool
+}
+
+func (ie *InputEvent) GetPosition() *rl.Vector2 { return ie.Position }
+func (ie *InputEvent) IsConsumed() bool         { return ie.Consumed }
+func (ie *InputEvent) Consume()                 { ie.Consumed = true }
+
+func HandleInput(rCtx *renderer.RenderContext) *InputEvent {
+	event := &InputEvent{
+		Position: rCtx.ScreenToVirtual(rl.GetMousePosition()),
+		Consumed: false,
+	}
 	if rl.IsKeyPressed(rl.KeyF11) {
-		broker.Push(&queue.Event{})
+		return event
 	}
 	if rl.IsKeyPressed(rl.KeyE) {
-		broker.Push(&queue.Event{})
+		return event
 	}
 	if rl.IsKeyPressed(rl.KeyQ) {
-		broker.Push(&queue.Event{})
+		return event
 	}
 	if rl.IsKeyPressed(rl.KeyC) {
-		broker.Push(&queue.Event{
-			Kind: 1,
-			Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
-		})
+		return event
 	}
 
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft){
-		ui.Click(rCtx.ScreenToVirtual(rl.GetMousePosition()))
-	}
-	delta := rl.GetMouseDelta()
-	if !rl.Vector2Equals(delta, rl.Vector2Zero()) {
-		// broker.Send(TopicInputCursorMoved, pubsub.Event{Data: framework.InputEvent{
-		// 	Position:  rCtx.ScreenToVirtual(rl.GetMousePosition()),
-		// 	EventType: framework.MouseHoverEvent,}})
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		event.Type = "mouse"
+		event.State = "clicked"
+		// event.Key = rl.MouseButtonLeft
+		event.Position = rCtx.ScreenToVirtual(rl.GetMousePosition())
+		return event
 	}
 
 	if wheel := rl.GetMouseWheelMove(); wheel != 0 {
-		broker.Push(&queue.Event{})
+		return event
 	}
 
 	direction := rl.Vector2Zero()
@@ -73,6 +83,8 @@ func HandleInput(ui *ui.Root, broker *queue.EventQueue, rCtx *renderer.RenderCon
 	}
 
 	if !rl.Vector2Equals(direction, rl.Vector2Zero()) {
-		broker.Push(&queue.Event{})
+		return event
 	}
+
+	return event
 }

@@ -23,11 +23,12 @@ func (rc *RenderContext) Update(screenSize rl.Vector2) {
 	rc.Viewport = rl.NewRectangle(destX, destY, destWidth, destHeight)
 }
 
-func (rc *RenderContext) ScreenToVirtual(screenPos rl.Vector2) rl.Vector2 {
-	return rl.NewVector2(
+func (rc *RenderContext) ScreenToVirtual(screenPos rl.Vector2) *rl.Vector2 {
+	p := rl.NewVector2(
 		(screenPos.X-rc.Viewport.X)/rc.Scale,
 		(screenPos.Y-rc.Viewport.Y)/rc.Scale,
 	)
+	return &p
 }
 
 func (rc *RenderContext) VirtualToScreen(virtualPos rl.Vector2) rl.Vector2 {

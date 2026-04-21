@@ -44,7 +44,7 @@ func NewPlayer(start rl.Vector2) Player {
 		"stockpile",
 	}
 	slots[5] = "sieve"
-	i := int32(2)
+	i := int32(-1)
 	return Player{
 		Position:  start,
 		Rotation:  0,
